@@ -3413,7 +3413,7 @@ p, li { white-space: pre-wrap; }
             <cDefine>CFG_DFLT_DISABLED</cDefine>
             <valInt>0</valInt>
         </disabled>
-        <lights_mode>
+        <custom.lights_mode>
             <longName>Headlight and Brake Light</longName>
             <type>4</type>
             <transmittable>1</transmittable>
@@ -3431,8 +3431,8 @@ p, li { white-space: pre-wrap; }
             <enumNames>Off</enumNames>
             <enumNames>Flash</enumNames>
             <enumNames>Always On</enumNames>
-        </lights_mode>
-        <ext_dcdc_enable>
+        </custom.lights_mode>
+        <custom.ext_dcdc_enable>
             <longName>Enable EXT DC-DC</longName>
             <type>5</type>
             <transmittable>1</transmittable>
@@ -3444,8 +3444,8 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;if False , SPESC board axu pin pull low to turn on DC-DC converter. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>CFG_SPESC_EXT_DCDC</cDefine>
             <valInt>1</valInt>
-        </ext_dcdc_enable>
-        <idle_warning_time>
+        </custom.ext_dcdc_enable>
+        <custom.idle_warning_time>
             <longName>Idle Warning Timer</longName>
             <type>4</type>
             <transmittable>1</transmittable>
@@ -3463,8 +3463,8 @@ p, li { white-space: pre-wrap; }
             <enumNames>30 min</enumNames>
             <enumNames>60 min</enumNames>
             <enumNames>120 min</enumNames>
-        </idle_warning_time>
-        <engine_sound_enable>
+        </custom.idle_warning_time>
+        <custom.engine_sound_enable>
             <longName>Enable Engine Sound</longName>
             <type>5</type>
             <transmittable>1</transmittable>
@@ -3475,8 +3475,8 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The timer has ended , producing a buzzing sound.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>CFG_SPESC_ENGINE_SOUND_EN</cDefine>
             <valInt>0</valInt>
-        </engine_sound_enable>
-        <engine_sampling_source>
+        </custom.engine_sound_enable>
+        <custom.engine_sampling_source>
             <longName>Engine Sampling Source</longName>
             <type>4</type>
             <transmittable>1</transmittable>
@@ -3490,8 +3490,8 @@ p, li { white-space: pre-wrap; }
             <enumNames>Motor Current</enumNames>
             <enumNames>ERPM</enumNames>
             <enumNames>PID</enumNames>
-        </engine_sampling_source>
-        <engine_sound_volume>
+        </custom.engine_sampling_source>
+        <custom.engine_sound_volume>
             <longName>Engine Sound Volume</longName>
             <type>2</type>
             <transmittable>1</transmittable>
@@ -3510,8 +3510,8 @@ p, li { white-space: pre-wrap; }
             <valInt>200</valInt>
             <suffix>%</suffix>
             <vTx>3</vTx>
-        </engine_sound_volume>
-        <startup_safety_warning>
+        </custom.engine_sound_volume>
+        <custom.startup_safety_warning>
             <longName>Safety Warning Sound</longName>
             <type>5</type>
             <transmittable>1</transmittable>
@@ -3522,8 +3522,8 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The one wheel produces a satety warning sound upon startup.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>CFG_SPESC_STARTUP_WARNING</cDefine>
             <valInt>1</valInt>
-        </startup_safety_warning>
-        <over_speed_warning>
+        </custom.startup_safety_warning>
+        <custom.over_speed_warning>
             <longName>Over Speed Warning</longName>
             <type>2</type>
             <transmittable>1</transmittable>
@@ -3542,8 +3542,8 @@ p, li { white-space: pre-wrap; }
             <valInt>20</valInt>
             <suffix>KM/H</suffix>
             <vTx>1</vTx>
-        </over_speed_warning>
-        <low_battery_warning>
+        </custom.over_speed_warning>
+        <custom.low_battery_warning>
             <longName>Low Battery Warning </longName>
             <type>2</type>
             <transmittable>1</transmittable>
@@ -3562,7 +3562,7 @@ p, li { white-space: pre-wrap; }
             <valInt>0</valInt>
             <suffix>%</suffix>
             <vTx>1</vTx>
-        </low_battery_warning>
+        </custom.low_battery_warning>
     </Params>
     <SerOrder>
         <ser>kp</ser>
@@ -3709,15 +3709,15 @@ p, li { white-space: pre-wrap; }
         <ser>dark_pitch_offset</ser>
         <ser>is_beeper_enabled</ser>
         <ser>disabled</ser>
-        <ser>lights_mode</ser>
-        <ser>ext_dcdc_enable</ser>
-        <ser>idle_warning_time</ser>
-        <ser>engine_sound_enable</ser>
-        <ser>engine_sampling_source</ser>
-        <ser>engine_sound_volume</ser>
-        <ser>startup_safety_warning</ser>
-        <ser>over_speed_warning</ser>
-        <ser>low_battery_warning</ser>
+        <ser>custom.lights_mode</ser>
+        <ser>custom.ext_dcdc_enable</ser>
+        <ser>custom.idle_warning_time</ser>
+        <ser>custom.engine_sound_enable</ser>
+        <ser>custom.engine_sampling_source</ser>
+        <ser>custom.engine_sound_volume</ser>
+        <ser>custom.startup_safety_warning</ser>
+        <ser>custom.over_speed_warning</ser>
+        <ser>custom.low_battery_warning</ser>
     </SerOrder>
     <Grouping>
         <group>

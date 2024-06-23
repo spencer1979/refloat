@@ -154,15 +154,15 @@ int32_t confparser_serialize_refloatconfig(uint8_t *buffer, const RefloatConfig 
 	buffer_append_float16(buffer, conf->dark_pitch_offset, 10, &ind);
 	buffer[ind++] = conf->is_beeper_enabled;
 	buffer[ind++] = conf->disabled;
-	buffer[ind++] = conf->lights_mode;
-	buffer[ind++] = conf->ext_dcdc_enable;
-	buffer[ind++] = conf->idle_warning_time;
-	buffer[ind++] = conf->engine_sound_enable;
-	buffer[ind++] = conf->engine_sampling_source;
-	buffer_append_uint16(buffer, conf->engine_sound_volume, &ind);
-	buffer[ind++] = conf->startup_safety_warning;
-	buffer[ind++] = (uint8_t)conf->over_speed_warning;
-	buffer[ind++] = (uint8_t)conf->low_battery_warning;
+	buffer[ind++] = conf->custom.lights_mode;
+	buffer[ind++] = conf->custom.ext_dcdc_enable;
+	buffer[ind++] = conf->custom.idle_warning_time;
+	buffer[ind++] = conf->custom.engine_sound_enable;
+	buffer[ind++] = conf->custom.engine_sampling_source;
+	buffer_append_uint16(buffer, conf->custom.engine_sound_volume, &ind);
+	buffer[ind++] = conf->custom.startup_safety_warning;
+	buffer[ind++] = (uint8_t)conf->custom.over_speed_warning;
+	buffer[ind++] = (uint8_t)conf->custom.low_battery_warning;
 
 	return ind;
 }
@@ -319,15 +319,15 @@ bool confparser_deserialize_refloatconfig(const uint8_t *buffer, RefloatConfig *
 	conf->dark_pitch_offset = buffer_get_float16(buffer, 10, &ind);
 	conf->is_beeper_enabled = buffer[ind++];
 	conf->disabled = buffer[ind++];
-	conf->lights_mode = buffer[ind++];
-	conf->ext_dcdc_enable = buffer[ind++];
-	conf->idle_warning_time = buffer[ind++];
-	conf->engine_sound_enable = buffer[ind++];
-	conf->engine_sampling_source = buffer[ind++];
-	conf->engine_sound_volume = buffer_get_uint16(buffer, &ind);
-	conf->startup_safety_warning = buffer[ind++];
-	conf->over_speed_warning = buffer[ind++];
-	conf->low_battery_warning = buffer[ind++];
+	conf->custom.lights_mode = buffer[ind++];
+	conf->custom.ext_dcdc_enable = buffer[ind++];
+	conf->custom.idle_warning_time = buffer[ind++];
+	conf->custom.engine_sound_enable = buffer[ind++];
+	conf->custom.engine_sampling_source = buffer[ind++];
+	conf->custom.engine_sound_volume = buffer_get_uint16(buffer, &ind);
+	conf->custom.startup_safety_warning = buffer[ind++];
+	conf->custom.over_speed_warning = buffer[ind++];
+	conf->custom.low_battery_warning = buffer[ind++];
 
 	return true;
 }
@@ -477,14 +477,14 @@ void confparser_set_defaults_refloatconfig(RefloatConfig *conf) {
 	conf->dark_pitch_offset = CFG_DFLT_DARK_PITCH_OFFSET;
 	conf->is_beeper_enabled = CFG_DFLT_IS_BEEPER_ENABLED;
 	conf->disabled = CFG_DFLT_DISABLED;
-	conf->lights_mode = CFG_SPESC_LIGHTS_MODE;
-	conf->ext_dcdc_enable = CFG_SPESC_EXT_DCDC;
-	conf->idle_warning_time = CFG_SPESC_IDLE_TIME;
-	conf->engine_sound_enable = CFG_SPESC_ENGINE_SOUND_EN;
-	conf->engine_sampling_source = CFG_SPESC_ENGINE_SAMPLE_SRC;
-	conf->engine_sound_volume = CFG_SPESC_ENGINE_SOUND_VOL;
-	conf->startup_safety_warning = CFG_SPESC_STARTUP_WARNING;
-	conf->over_speed_warning = CFG_SPESC_SPEED_ALERT;
-	conf->low_battery_warning = CFG_SPESC_LOW_BATTERY;
+	conf->custom.lights_mode = CFG_SPESC_LIGHTS_MODE;
+	conf->custom.ext_dcdc_enable = CFG_SPESC_EXT_DCDC;
+	conf->custom.idle_warning_time = CFG_SPESC_IDLE_TIME;
+	conf->custom.engine_sound_enable = CFG_SPESC_ENGINE_SOUND_EN;
+	conf->custom.engine_sampling_source = CFG_SPESC_ENGINE_SAMPLE_SRC;
+	conf->custom.engine_sound_volume = CFG_SPESC_ENGINE_SOUND_VOL;
+	conf->custom.startup_safety_warning = CFG_SPESC_STARTUP_WARNING;
+	conf->custom.over_speed_warning = CFG_SPESC_SPEED_ALERT;
+	conf->custom.low_battery_warning = CFG_SPESC_LOW_BATTERY;
 }
 
