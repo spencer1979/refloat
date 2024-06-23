@@ -2,7 +2,7 @@ src/conf/conf_general.h
 src/package_lib.lisp
 package_README-gen.md
 ui.qml
-
+.vscode/*
 *.list
 *.vescpkg
 
