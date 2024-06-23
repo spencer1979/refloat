@@ -3,11 +3,6 @@ src/package_lib.lisp
 package_README-gen.md
 ui.qml
 
-conf_default.h
-confparser.c
-confparser.h
-confxml.c
-confxml.h
 *.list
 *.vescpkg
 
