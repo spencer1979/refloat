@@ -20,7 +20,8 @@
 #include "balance_filter.h"
 
 #include "vesc_c_if.h"
-
+/**custom hardware(SPEsc) include  */
+#include "custom_hw.h"
 #include "atr.h"
 #include "charging.h"
 #include "footpad_sensor.h"
@@ -192,14 +193,31 @@ static void set_current(data *d, float current);
 static void flywheel_stop(data *d);
 static void cmd_flywheel_toggle(data *d, unsigned char *cfg, int len);
 
-const VESC_PIN beeper_pin = VESC_PIN_PPM;
-
-#define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
-#define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
-
-void beeper_init() {
-    VESC_IF->io_set_mode(beeper_pin, VESC_PIN_MODE_OUTPUT);
+#ifdef CUSTOM_HW_H
+#if (CUSTOM_HW_VERSION_MAJOR >= 3)
+    #define BEEPER_GPIO_PORT GPIOC
+    #define BEEPER_GPIO_PIN 13
+#else
+    #define BEEPER_GPIO_PORT GPIOB
+    #define BEEPER_GPIO_PIN 9
+#endif
+    #define EXT_BEEPER_ON() VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
+    #define EXT_BEEPER_OFF() VESC_IF->clear_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
+    void beeper_init() {
+        VESC_IF->set_pad_mode(
+            BEEPER_GPIO_PORT,
+            BEEPER_GPIO_PIN,
+            PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
+        );
 }
+#else
+    const VESC_PIN beeper_pin = VESC_PIN_PPM;
+    #define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
+    #define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
+    void beeper_init() {
+        VESC_IF->io_set_mode(beeper_pin, VESC_PIN_MODE_OUTPUT);
+    }
+#endif
 
 void beeper_update(data *d) {
     if (d->beeper_enabled && (d->beep_num_left > 0)) {
@@ -1415,6 +1433,8 @@ static void refloat_thd(void *arg) {
             } else {
                 set_current(d, d->pid_value);
             }
+
+            
 
             break;
 
@@ -2731,7 +2751,9 @@ INIT_FUN(lib_info *info) {
     VESC_IF->set_app_data_handler(on_command_received);
     VESC_IF->lbm_add_extension("ext-dbg", ext_dbg);
     VESC_IF->lbm_add_extension("ext-set-fw-version", ext_set_fw_version);
-
+    #ifdef USE_CUSTOM_HW
+        csutom_hw_init();
+    #endif 
     return true;
 }
 

@@ -98,10 +98,10 @@ typedef enum : uint8_t {
  */
 typedef enum
 {
-    FLOAT_LIGHT_OFF = 0,
-    FLOAT_LIGHT_FLASH,
-    FLOAT_LIGHT_FULL_ON
-} SPESC_LIGHT_MODE;
+    COB_LIGHT_OFF = 0,
+    COB_LIGHT_FLASH,
+    COB_LIGHT_FULL_ON
+} SPESC_COB_LIGHT_MODE;
 /**
  * 閒置計時器設定
  */
@@ -181,8 +181,9 @@ typedef struct {
     CfgHwLeds leds;
 } CfgHardware;
 
+
 typedef struct{
-    SPESC_LIGHT_MODE lights_mode ;
+    SPESC_COB_LIGHT_MODE lights_mode ;
 	bool ext_dcdc_enable ;
 	SPESC_IDLE_TIME   idle_warning_time;
 	bool engine_sound_enable ;
