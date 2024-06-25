@@ -1,56 +1,25 @@
 #pragma once
-
 #ifndef CUSTOM_HW_H
 #define CUSTOM_HW_H
+
+#include <stdbool.h>
+#include <stdint.h>
 #include "conf/datatypes.h"
-#include "motor_data.h"
+#include "st_types.h"
 #include "state.h"
 #define USE_CUSTOM_HW  // 設為1可控制外部DCDC及引擎聲音校及COB LED 
 #define CUSTOM_HW_VERSION_MAJOR 3
 #define CUSTOM_HW_VERSION_MINOR 3
 #define ESP32_COMMAND_ID 102
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
-void custom_hw_init(void );
-
-typedef enum
-{	ESP_COMMAND_GET_READY=0,
-	ESP_COMMAND_GET_ADV_INFO ,  // get ADVANCED setting only for SPESC
-	ESP_COMMAND_ENGINE_SOUND_INFO, // engine sound info , erpm ,duty
-	// esp32 get the sound trigger
-	ESP_COMMAND_SOUND_GET,
-	// app set sound trigger
-	ESP_COMMAND_SOUND_SET,
-	// enable item data
-	ESP_COMMAND_ENABLE_ITEM_INFO,
-
-} esp_commands;
-
-typedef enum
-{
-	SOUND_HORN_TRIGGERED=0 ,
-	SOUND_EXCUSE_ME_TRIGGERED,
-	SOUND_POLICE_TRIGGERED,
-	SOUND_DANGER_TRIGGERED
-} sound_triggered_mask;
-
-
-//Determine the function of a certain bit
-typedef enum
-{
-EXT_DCDC_ENABLE_MASK_BIT=0,
-ENGINE_SOUND_ENABLE_MASK_BIT,
-START_UP_WARNING_ENABLE_MASK_BIT,
-} float_enable_mask;
-
-
 
 /**Head light blink var */
 #define SEC_TO_MILLS 1000
-#define LIGHT_BLINK_TIME_MIN 300	 // blink 0.3 seconds
-#define LIGHT_BLINK_TIME_MAX 1500	 // blink 1.5 seconds
-#define BRK_LIGHT_BLINK_TIME_MIN 150 // 150 ms rear light blink when brake  .
+#define LIGHT_BLINK_TIME_MIN 300.00	 // blink 0.3 seconds
+#define LIGHT_BLINK_TIME_MAX 1500.00	 // blink 1.5 seconds
+#define BRK_LIGHT_BLINK_TIME 150.00 // 150 ms rear light blink when brake  .
 /**Lights GPIO  */
-#if (HW_VERSION_MAJOR <=2)
+#if (CUSTOM_HW_VERSION_MAJOR <=2)
 #define REAR_LIGHT_GPIO GPIOB
 #define REAR_LIGHT_PIN 7
 #define FWD_LIGHT_GPIO GPIOB
@@ -78,5 +47,31 @@ START_UP_WARNING_ENABLE_MASK_BIT,
 
 
 
+//燈光控制狀態結構體
+typedef struct {
+    float last_toggle_time;
+    float last_brake_flash_time;
+    CUSTOM_COB_LIGHT_MODE light_mode;
+    bool headlight_state;
+    bool brakelight_state;
+    float toggle_interval; //頭燈和煞車燈的交替時間
+    float flash_interval;//煞車燈的閃爍時間
+} CustomLightControl;
 
-#endif
+//初始化燈光控制系統
+void custom_lights_control_init(CustomLightControl *state,CUSTOM_COB_LIGHT_MODE light_mode);
+
+//燈光控制函數
+void control_lights(
+    CustomLightControl *light_state,
+    State  *state,
+    float abs_erpm,
+    float pid_value,
+    float system_time
+);
+
+//前燈後燈控制函數
+void set_custom_headlight(bool state);
+void set_custom_brakelight(bool state);
+
+#endif // CUSTOM_HW_H

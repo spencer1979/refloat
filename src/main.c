@@ -18,12 +18,11 @@
 // this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "balance_filter.h"
-
 #include "vesc_c_if.h"
 /**custom hardware(SPEsc) include  */
-#include "custom_hw.h"
 #include "atr.h"
 #include "charging.h"
+#include "custom_hw.h"
 #include "footpad_sensor.h"
 #include "lcm.h"
 #include "leds.h"
@@ -186,6 +185,9 @@ typedef struct {
     float rc_current;
 
     Konami flywheel_konami;
+
+   // CustomLightControl custom_lights_ctr;
+
 } data;
 
 static void brake(data *d);
@@ -195,28 +197,28 @@ static void cmd_flywheel_toggle(data *d, unsigned char *cfg, int len);
 
 #ifdef CUSTOM_HW_H
 #if (CUSTOM_HW_VERSION_MAJOR >= 3)
-    #define BEEPER_GPIO_PORT GPIOC
-    #define BEEPER_GPIO_PIN 13
+#define BEEPER_GPIO_PORT GPIOC
+#define BEEPER_GPIO_PIN 13
 #else
-    #define BEEPER_GPIO_PORT GPIOB
-    #define BEEPER_GPIO_PIN 9
+#define BEEPER_GPIO_PORT GPIOB
+#define BEEPER_GPIO_PIN 9
 #endif
-    #define EXT_BEEPER_ON() VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
-    #define EXT_BEEPER_OFF() VESC_IF->clear_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
-    void beeper_init() {
-        VESC_IF->set_pad_mode(
-            BEEPER_GPIO_PORT,
-            BEEPER_GPIO_PIN,
-            PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
-        );
+#define EXT_BEEPER_ON() VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
+#define EXT_BEEPER_OFF() VESC_IF->clear_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
+void beeper_init() {
+    VESC_IF->set_pad_mode(
+        BEEPER_GPIO_PORT,
+        BEEPER_GPIO_PIN,
+        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
+    );
 }
 #else
-    const VESC_PIN beeper_pin = VESC_PIN_PPM;
-    #define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
-    #define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
-    void beeper_init() {
-        VESC_IF->io_set_mode(beeper_pin, VESC_PIN_MODE_OUTPUT);
-    }
+const VESC_PIN beeper_pin = VESC_PIN_PPM;
+#define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
+#define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
+void beeper_init() {
+    VESC_IF->io_set_mode(beeper_pin, VESC_PIN_MODE_OUTPUT);
+}
 #endif
 
 void beeper_update(data *d) {
@@ -570,10 +572,9 @@ static bool check_faults(data *d) {
                     return true;
                 }
                 // low speed (below 6 x half-fault threshold speed):
-                else if (
-                    (d->motor.abs_erpm < d->float_conf.fault_adc_half_erpm * 6) &&
-                    (1000.0 * (d->current_time - d->fault_switch_timer) >
-                     d->float_conf.fault_delay_switch_half)) {
+                else if ((d->motor.abs_erpm < d->float_conf.fault_adc_half_erpm * 6) &&
+                         (1000.0 * (d->current_time - d->fault_switch_timer) >
+                          d->float_conf.fault_delay_switch_half)) {
                     state_stop(&d->state, STOP_SWITCH_FULL);
                     return true;
                 }
@@ -697,11 +698,12 @@ static void calculate_setpoint_target(data *d) {
                 }
             }
         }
-    } else if (
-        d->state.mode != MODE_FLYWHEEL &&
-        fabsf(d->motor.acceleration) > 15 &&  // not normal, either wheelslip or wheel getting stuck
-        sign(d->motor.acceleration) == d->motor.erpm_sign && d->motor.duty_cycle > 0.3 &&
-        d->motor.abs_erpm > 2000)  // acceleration can jump a lot at very low speeds
+    } else if (d->state.mode != MODE_FLYWHEEL &&
+               fabsf(d->motor.acceleration) >
+                   15 &&  // not normal, either wheelslip or wheel getting stuck
+               sign(d->motor.acceleration) == d->motor.erpm_sign &&
+               d->motor.duty_cycle > 0.3 &&
+               d->motor.abs_erpm > 2000)  // acceleration can jump a lot at very low speeds
     {
         d->state.wheelslip = true;
         d->state.sat = SAT_NONE;
@@ -1086,7 +1088,7 @@ static void imu_ref_callback(float *acc, float *gyro, [[maybe_unused]] float *ma
 
 static void refloat_thd(void *arg) {
     data *d = (data *) arg;
-
+  
     configure(d);
 
     while (!VESC_IF->should_terminate()) {
@@ -1433,8 +1435,6 @@ static void refloat_thd(void *arg) {
             } else {
                 set_current(d, d->pid_value);
             }
-
-            
 
             break;
 
@@ -2709,6 +2709,7 @@ INIT_FUN(lib_info *info) {
     log_msg("Initializing Refloat v" PACKAGE_VERSION);
 
     data *d = VESC_IF->malloc(sizeof(data));
+
     if (!d) {
         log_error("Out of memory, startup failed.");
         return false;
@@ -2751,9 +2752,7 @@ INIT_FUN(lib_info *info) {
     VESC_IF->set_app_data_handler(on_command_received);
     VESC_IF->lbm_add_extension("ext-dbg", ext_dbg);
     VESC_IF->lbm_add_extension("ext-set-fw-version", ext_set_fw_version);
-    #ifdef USE_CUSTOM_HW
-        csutom_hw_init();
-    #endif 
+    //custom_lights_control_init(&d->custom_lights_ctr,d->custom_lights_ctr.light_mode);
     return true;
 }
 
