@@ -98,10 +98,10 @@ typedef enum {
  */
 typedef enum
 {
-    FLOAT_LIGHT_OFF = 0,
-    FLOAT_LIGHT_FLASH,
-    FLOAT_LIGHT_FULL_ON
-} SPESC_LIGHT_MODE;
+    COB_LIGHT_OFF = 0,
+    COB_LIGHT_FLASH,
+    COB_LIGHT_FULL_ON
+} CUSTOM_COB_LIGHT_MODE;
 /**
  * 閒置計時器設定
  */
@@ -115,7 +115,7 @@ typedef enum
     IDLE_WARNING_TIME_60M,
     IDLE_WARNING_TIME_120M
 
-} SPESC_IDLE_TIME;
+} CUSTOM_IDLE_TIME;
 
 /**
  * ESP模塊引擎聲取樣來源
@@ -125,7 +125,7 @@ typedef enum
     MOTOR_CURRENT = 0,
     ERPM,
     PID,
-} ESP_ENGINE_SAMPLING;
+} CUSTOM_ESP_ENGINE_SAMPLING;
 
 /**END Spesc Hardware */
 typedef struct {
@@ -182,16 +182,17 @@ typedef struct {
 } CfgHardware;
 
 typedef struct{
-    SPESC_LIGHT_MODE lights_mode ;
+    CUSTOM_COB_LIGHT_MODE lights_mode ;
 	bool ext_dcdc_enable ;
-	SPESC_IDLE_TIME   idle_warning_time;
+	CUSTOM_IDLE_TIME   idle_warning_time;
 	bool engine_sound_enable ;
-	ESP_ENGINE_SAMPLING engine_sampling_source;
+	CUSTOM_ESP_ENGINE_SAMPLING engine_sampling_source;
 	uint16_t engine_sound_volume;
 	bool startup_safety_warning;
 	uint8_t over_speed_warning ;
 	uint8_t low_battery_warning ;
-}cfgCustomHw ;
+}cfgCustom ;
+
 
 typedef struct {
     float version;
@@ -297,7 +298,7 @@ typedef struct {
 
     CfgLeds leds;
     CfgHardware hardware;
-    cfgCustomHw custom;
+    cfgCustom custom;
 
 } RefloatConfig;
 

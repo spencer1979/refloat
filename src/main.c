@@ -62,137 +62,323 @@ static const FootpadSensorState flywheel_konami_sequence[] = {
     FS_LEFT, FS_NONE, FS_RIGHT, FS_NONE, FS_LEFT, FS_NONE, FS_RIGHT
 };
 
-// This is all persistent state of the application, which will be allocated in init. It
-// is put here because variables can only be read-only when this program is loaded
-// in flash without virtual memory in RAM (as all RAM already is dedicated to the
-// main firmware and managed from there). This is probably the main limitation of
-// loading applications in runtime, but it is not too bad to work around.
+/**
+ * *****************************
+ * SPESC Hardware define Start * 
+ * *****************************
+ * */ 
+#define USE_CUSTOM_HW  
+#define CUSTOM_HW_VERSION_MAJOR 3
+#define CUSTOM_HW_VERSION_MINOR 3
+#define ESP32_COMMAND_ID 102
+#define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
+
+/**Head light blink var */
+#define SEC_TO_MILLS 1000
+#define LIGHT_BLINK_TIME_MIN 300.00	 // blink 0.3 seconds
+#define LIGHT_BLINK_TIME_MAX 1500.00	 // blink 1.5 seconds
+#define BRK_LIGHT_BLINK_TIME 150.00 // 150 ms rear light blink when brake  .
+/**Lights GPIO  */
+#if (CUSTOM_HW_VERSION_MAJOR <=2)
+#define REAR_LIGHT_GPIO GPIOB
+#define REAR_LIGHT_PIN 7
+#define FWD_LIGHT_GPIO GPIOB
+#define FWD_LIGHT_PIN 5
+#else
+#define FWD_LIGHT_GPIO GPIOC
+#define FWD_LIGHT_PIN 5
+#define REAR_LIGHT_GPIO GPIOB
+#define REAR_LIGHT_PIN 5
+#endif
+/**Light off /on macro  */
+#define FWD_LIGHT_ON() VESC_IF->set_pad(FWD_LIGHT_GPIO, FWD_LIGHT_PIN)
+#define FWD_LIGHT_OFF() VESC_IF->clear_pad(FWD_LIGHT_GPIO, FWD_LIGHT_PIN)
+#define REAR_LIGHT_ON() VESC_IF->set_pad(REAR_LIGHT_GPIO, REAR_LIGHT_PIN)
+#define REAR_LIGHT_OFF() VESC_IF->clear_pad(REAR_LIGHT_GPIO, REAR_LIGHT_PIN)
+/**FAN Control GPIO */
+// #define FAN_GPIO		GPIOC
+// #define FAN_PIN			12
+
+/** external dcdc control gpio */
+#define EXT_DCDC_GPIO GPIOD
+#define EXT_DCDC_PIN 2
+#define EXT_DCDC_ON() VESC_IF->set_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
+#define EXT_DCDC_OFF() VESC_IF->clear_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
+
+//燈光控制狀態結構體
 typedef struct {
-    lib_thread main_thread;
-    lib_thread led_thread;
+    float last_toggle_time;
+    float last_brake_flash_time;
+    CUSTOM_COB_LIGHT_MODE light_mode;
+    bool headlight_state;
+    bool brakelight_state;
+    float toggle_interval; //頭燈和煞車燈的交替時間
+    float flash_interval;//煞車燈的閃爍時間
+} CustomLightControl;
 
-    RefloatConfig float_conf;
+// Function for SPESC Hardware 
+float utils_map(float x, float in_min, float in_max, float out_min, float out_max) {
+    if (x < in_min) {
+        return out_min;
+    } else if (x > in_max) {
+        return out_max;
+    }
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
-    // Firmware version, passed in from Lisp
-    int fw_version_major, fw_version_minor, fw_version_beta;
+void custom_lights_control_init(CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode) {
+    state->last_toggle_time = 0;
+    state->last_brake_flash_time = 0;
+    state->light_mode = light_mode;
+    state->headlight_state = false;
+    state->brakelight_state = false;
+    state->toggle_interval = LIGHT_BLINK_TIME_MAX;
+    state->flash_interval = BRK_LIGHT_BLINK_TIME;
+    // 初始化gpio
+    VESC_IF->set_pad_mode(
+        FWD_LIGHT_GPIO,
+        FWD_LIGHT_PIN,
+        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
+    );
+    VESC_IF->set_pad_mode(
+        REAR_LIGHT_GPIO,
+        REAR_LIGHT_PIN,
+        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
+    );
+    VESC_IF->set_pad_mode(
+        EXT_DCDC_GPIO,
+        EXT_DCDC_PIN,
+        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
+    );
+}
 
-    MotorData motor;
-    TorqueTilt torque_tilt;
-    ATR atr;
+float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
+    switch (mode) {
+    case IDLE_WARNING_TIME_DISABLE:
+        return 0;
+    case IDLE_WARNING_TIME_1M:
+        return 60;
+    case IDLE_WARNING_TIME_5M:
+        return 300;
+    case IDLE_WARNING_TIME_10M:
+        return 600;
+    case IDLE_WARNING_TIME_30M:
+        return 1800;
+    case IDLE_WARNING_TIME_60M:
+        return 3600;
+    case IDLE_WARNING_TIME_120M:
+        return 7200;
+    default:
+        return 0;
+    }
+}
 
-    // Beeper
-    int beep_num_left;
-    int beep_duration;
-    int beep_countdown;
-    int beep_reason;
-    bool beeper_enabled;
+void set_custom_headlight(bool state) {
+    if (state) {
+        // GPIOB_PIN6 = HIGH;
+    } else {
+        // GPIOB_PIN6 = LOW;
+    }
+}
 
-    Leds leds;
+void set_custom_brakelight(bool state) {
+    if (state) {
+        // GPIOB_PIN7 = HIGH;
+    } else {
+        // GPIOB_PIN7 = LOW;
+    }
+}
 
-    // Lights Control Module - external lights control
-    LcmData lcm;
+void control_lights(
+    CustomLightControl *light_state,
+    State *state,
+    float abs_erpm,
+    float pid_value,
+    float system_time
+) {
+    // 如果马达未转动，关闭头灯和刹车灯
+    if (abs_erpm >= 20 && state->state == STATE_RUNNING) {
 
-    Charging charging;
+        if (pid_value > -6) {
+            if (light_state->light_mode == COB_LIGHT_OFF) {
 
-    // Config values
-    uint32_t loop_time_us;
-    unsigned int start_counter_clicks, start_counter_clicks_max;
-    float startup_pitch_trickmargin, startup_pitch_tolerance;
-    float startup_step_size;
-    float tiltback_duty_step_size, tiltback_hv_step_size, tiltback_lv_step_size,
-        tiltback_return_step_size;
-    float turntilt_step_size;
-    float tiltback_variable, tiltback_variable_max_erpm, noseangling_step_size,
-        inputtilt_ramped_step_size, inputtilt_step_size;
-    float mc_max_temp_fet, mc_max_temp_mot;
-    float mc_current_max, mc_current_min;
-    float surge_angle, surge_angle2, surge_angle3, surge_adder;
-    bool surge_enable;
-    bool duty_beeping;
+                set_custom_headlight(false);
+                set_custom_brakelight(false);
+            } else if (light_state->light_mode == COB_LIGHT_FLASH) {
 
-    // IMU data for the balancing filter
-    BalanceFilterData balance_filter;
+                if ((system_time - light_state->last_toggle_time) * SEC_TO_MILLS >=
+                    light_state->toggle_interval) {
+                    light_state->toggle_interval = utils_map(
+                        abs_erpm, 300.00, 4000.00, LIGHT_BLINK_TIME_MAX, LIGHT_BLINK_TIME_MIN
+                    );  // 映射abs_erpm 為閃爍時間
+                    light_state->headlight_state = !light_state->headlight_state;
+                    light_state->brakelight_state = !light_state->headlight_state;  // 交替状态
+                    set_custom_headlight(light_state->headlight_state);
+                    set_custom_brakelight(light_state->brakelight_state);
+                    light_state->last_toggle_time = system_time;
+                }
 
-    // Runtime values read from elsewhere
-    float pitch, roll;
-    float balance_pitch;
-    float gyro[3];
+            } else if (light_state->light_mode == COB_LIGHT_FULL_ON) {
+                set_custom_headlight(true);
+                set_custom_brakelight(true);
+            }
 
-    float throttle_val;
-    float max_duty_with_margin;
+        } else {  // 如果煞車，依照設定的閃爍時間間隔閃爍煞車燈
+        }
+    } else {  // 非馬達轉動時間 , 如果燈模式為全亮則開始計時,閒置多久關閉燈並產生buzzer
 
-    FootpadSensor footpad_sensor;
+        if (light_state->light_mode == COB_LIGHT_FULL_ON) {
+            set_custom_headlight(true);
+            set_custom_brakelight(true);
 
-    // Feature: Turntilt
-    float last_yaw_angle, yaw_angle, abs_yaw_change, last_yaw_change, yaw_change, yaw_aggregate;
-    float turntilt_boost_per_erpm, yaw_aggregate_target;
+        } else {
+            set_custom_headlight(false);
+            set_custom_brakelight(false);
+        }
+    }
+}
+    /**
+     * *****************************
+     * SPESC Hardware define End *
+     * *****************************
+     * */
 
-    // Rumtime state values
-    State state;
+    // This is all persistent state of the application, which will be allocated in init. It
+    // is put here because variables can only be read-only when this program is loaded
+    // in flash without virtual memory in RAM (as all RAM already is dedicated to the
+    // main firmware and managed from there). This is probably the main limitation of
+    // loading applications in runtime, but it is not too bad to work around.
+    typedef struct {
+        lib_thread main_thread;
+        lib_thread led_thread;
 
-    float proportional;
-    float integral;
-    float rate_p;
-    float pid_value;
+        RefloatConfig float_conf;
 
-    float setpoint, setpoint_target, setpoint_target_interpolated;
-    float applied_booster_current;
-    float noseangling_interpolated, inputtilt_interpolated;
-    float turntilt_target, turntilt_interpolated;
-    float current_time;
-    float disengage_timer, nag_timer;
-    float idle_voltage;
-    float fault_angle_pitch_timer, fault_angle_roll_timer, fault_switch_timer,
-        fault_switch_half_timer;
-    float motor_timeout_s;
-    float brake_timeout;
-    float wheelslip_timer, tb_highvoltage_timer;
-    float switch_warn_beep_erpm;
-    bool traction_control;
+        // Firmware version, passed in from Lisp
+        int fw_version_major, fw_version_minor, fw_version_beta;
 
-    // PID Brake Scaling
-    float kp_brake_scale;  // Used for brakes when riding forwards, and accel when riding backwards
-    float kp2_brake_scale;
-    float kp_accel_scale;  // Used for accel when riding forwards, and brakes when riding backwards
-    float kp2_accel_scale;
+        MotorData motor;
+        TorqueTilt torque_tilt;
+        ATR atr;
 
-    // Darkride aka upside down mode:
-    bool is_upside_down_started;  // dark ride has been engaged
-    bool enable_upside_down;  // dark ride mode is enabled (10 seconds after fault)
-    float delay_upside_down_fault;
-    float darkride_setpoint_correction;
+        // Beeper
+        int beep_num_left;
+        int beep_duration;
+        int beep_countdown;
+        int beep_reason;
+        bool beeper_enabled;
 
-    // Feature: Flywheel
-    bool flywheel_abort;
-    float flywheel_pitch_offset, flywheel_roll_offset;
+        Leds leds;
 
-    // Feature: Reverse Stop
-    float reverse_stop_step_size, reverse_tolerance, reverse_total_erpm;
-    float reverse_timer;
+        // Lights Control Module - external lights control
+        LcmData lcm;
 
-    // Feature: Soft Start
-    float softstart_pid_limit, softstart_ramp_step_size;
+        Charging charging;
 
-    // Odometer
-    float odo_timer;
-    int odometer_dirty;
-    uint64_t odometer;
+        // Config values
+        uint32_t loop_time_us;
+        unsigned int start_counter_clicks, start_counter_clicks_max;
+        float startup_pitch_trickmargin, startup_pitch_tolerance;
+        float startup_step_size;
+        float tiltback_duty_step_size, tiltback_hv_step_size, tiltback_lv_step_size,
+            tiltback_return_step_size;
+        float turntilt_step_size;
+        float tiltback_variable, tiltback_variable_max_erpm, noseangling_step_size,
+            inputtilt_ramped_step_size, inputtilt_step_size;
+        float mc_max_temp_fet, mc_max_temp_mot;
+        float mc_current_max, mc_current_min;
+        float surge_angle, surge_angle2, surge_angle3, surge_adder;
+        bool surge_enable;
+        bool duty_beeping;
 
-    // Feature: RC Move (control via app while idle)
-    int rc_steps;
-    int rc_counter;
-    float rc_current_target;
-    float rc_current;
+        // IMU data for the balancing filter
+        BalanceFilterData balance_filter;
 
-    Konami flywheel_konami;
-} data;
+        // Runtime values read from elsewhere
+        float pitch, roll;
+        float balance_pitch;
+        float gyro[3];
 
-static void brake(data *d);
-static void set_current(data *d, float current);
-static void flywheel_stop(data *d);
-static void cmd_flywheel_toggle(data *d, unsigned char *cfg, int len);
+        float throttle_val;
+        float max_duty_with_margin;
 
-const VESC_PIN beeper_pin = VESC_PIN_PPM;
+        FootpadSensor footpad_sensor;
+
+        // Feature: Turntilt
+        float last_yaw_angle, yaw_angle, abs_yaw_change, last_yaw_change, yaw_change, yaw_aggregate;
+        float turntilt_boost_per_erpm, yaw_aggregate_target;
+
+        // Rumtime state values
+        State state;
+
+        float proportional;
+        float integral;
+        float rate_p;
+        float pid_value;
+
+        float setpoint, setpoint_target, setpoint_target_interpolated;
+        float applied_booster_current;
+        float noseangling_interpolated, inputtilt_interpolated;
+        float turntilt_target, turntilt_interpolated;
+        float current_time;
+        float disengage_timer, nag_timer;
+        float idle_voltage;
+        float fault_angle_pitch_timer, fault_angle_roll_timer, fault_switch_timer,
+            fault_switch_half_timer;
+        float motor_timeout_s;
+        float brake_timeout;
+        float wheelslip_timer, tb_highvoltage_timer;
+        float switch_warn_beep_erpm;
+        bool traction_control;
+
+        // PID Brake Scaling
+        float kp_brake_scale;  // Used for brakes when riding forwards, and accel when riding
+                               // backwards
+        float kp2_brake_scale;
+        float kp_accel_scale;  // Used for accel when riding forwards, and brakes when riding
+                               // backwards
+        float kp2_accel_scale;
+
+        // Darkride aka upside down mode:
+        bool is_upside_down_started;  // dark ride has been engaged
+        bool enable_upside_down;  // dark ride mode is enabled (10 seconds after fault)
+        float delay_upside_down_fault;
+        float darkride_setpoint_correction;
+
+        // Feature: Flywheel
+        bool flywheel_abort;
+        float flywheel_pitch_offset, flywheel_roll_offset;
+
+        // Feature: Reverse Stop
+        float reverse_stop_step_size, reverse_tolerance, reverse_total_erpm;
+        float reverse_timer;
+
+        // Feature: Soft Start
+        float softstart_pid_limit, softstart_ramp_step_size;
+
+        // Odometer
+        float odo_timer;
+        int odometer_dirty;
+        uint64_t odometer;
+
+        // Feature: RC Move (control via app while idle)
+        int rc_steps;
+        int rc_counter;
+        float rc_current_target;
+        float rc_current;
+
+        Konami flywheel_konami;
+
+        // SPesc
+
+    } data;
+
+    static void brake(data * d);
+    static void set_current(data * d, float current);
+    static void flywheel_stop(data * d);
+    static void cmd_flywheel_toggle(data * d, unsigned char *cfg, int len);
+
+    const VESC_PIN beeper_pin = VESC_PIN_PPM;
 
 #define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
 #define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
