@@ -715,7 +715,7 @@
 
 // Enable Beeper on Servo/PPM
 #ifndef CFG_DFLT_IS_BEEPER_ENABLED
-#define CFG_DFLT_IS_BEEPER_ENABLED 0
+#define CFG_DFLT_IS_BEEPER_ENABLED 1
 #endif
 
 // Disable Package
@@ -725,7 +725,7 @@
 
 // Headlight and Brake Light
 #ifndef CFG_SPESC_LIGHTS_MODE
-#define CFG_SPESC_LIGHTS_MODE 0
+#define CFG_SPESC_LIGHTS_MODE 1
 #endif
 
 // Enable EXT DC-DC
@@ -755,7 +755,7 @@
 
 // Safety Warning Sound
 #ifndef CFG_SPESC_STARTUP_WARNING
-#define CFG_SPESC_STARTUP_WARNING 1
+#define CFG_SPESC_STARTUP_WARNING 0
 #endif
 
 // Over Speed Warning

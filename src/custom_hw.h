@@ -21,9 +21,11 @@
 #include "conf/datatypes.h"
 #include <stdbool.h>
 #include <stdint.h>
+
 #define CUSTOM_HW_VERSION_MAJOR 3
-#define CUSTOM_HW_VERSION_MINOR 0
+#define CUSTOM_HW_VERSION_MINOR 3
 #define ESP32_COMMAND_ID 102
+
 
 // 燈光控制狀態結構體
 typedef struct {

@@ -3216,7 +3216,6 @@ p, li { white-space: pre-wrap; }
             <enumNames>None</enumNames>
             <enumNames>RGB</enumNames>
             <enumNames>RGBW</enumNames>
-            <enumNames>External Module</enumNames>
         </hardware.leds.type>
         <hardware.leds.pin>
             <longName>LED Pin</longName>
@@ -3398,7 +3397,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Enable/disable beeper. Beeper is controlled by Servo/PPM. Active beeper required, 3pin version recommended.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>CFG_DFLT_IS_BEEPER_ENABLED</cDefine>
-            <valInt>0</valInt>
+            <valInt>1</valInt>
         </is_beeper_enabled>
         <disabled>
             <longName>Disable Package</longName>
@@ -3427,7 +3426,7 @@ p, li { white-space: pre-wrap; }
 &lt;li style=&quot;&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Lights always turn on.&lt;/li&gt;&lt;/ol&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>CFG_SPESC_LIGHTS_MODE</cDefine>
-            <valInt>0</valInt>
+            <valInt>1</valInt>
             <enumNames>Off</enumNames>
             <enumNames>Flash</enumNames>
             <enumNames>Always On</enumNames>
@@ -3521,7 +3520,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The one wheel produces a satety warning sound upon startup.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>CFG_SPESC_STARTUP_WARNING</cDefine>
-            <valInt>1</valInt>
+            <valInt>0</valInt>
         </custom.startup_safety_warning>
         <custom.over_speed_warning>
             <longName>Over Speed Warning</longName>
@@ -3954,20 +3953,20 @@ p, li { white-space: pre-wrap; }
                 <subgroupName>Custom</subgroupName>
                 <subgroupParams>
                     <param>::sep::Head &amp; Brake Light</param>
-                    <param>lights_mode</param>
+                    <param>custom.lights_mode</param>
                     <param>::sep::EXT-DCDC Control</param>
-                    <param>ext_dcdc_enabled</param>
+                    <param>custom.ext_dcdc_enable</param>
                     <param>::sep::Idle Warning</param>
-                    <param>idle_warning_time</param>
+                    <param>custom.idle_warning_time</param>
                     <param>::sep::Engine Sound</param>
-                    <param>engine_sound_enable</param>
-                    <param>engine_sampling_source</param>
-                    <param>engine_sound_volume</param>
+                    <param>custom.engine_sound_enable</param>
+                    <param>custom.engine_sampling_source</param>
+                    <param>custom.engine_sound_volume</param>
                     <param>::sep::Warning Sound</param>
-                    <param>startup_safety_warning</param>
-                    <param>over_speed_warning</param>
+                    <param>custom.startup_safety_warning</param>
+                    <param>custom.over_speed_warning</param>
                     <param>::sep::Low Battery Warning</param>
-                    <param>low_battery_warning_level</param>
+                    <param>custom.low_battery_warning</param>
                 </subgroupParams>
             </subgroup>
         </group>

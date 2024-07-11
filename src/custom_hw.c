@@ -67,7 +67,7 @@
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
 
 //Buzzer IO 
-#if (CUSTOM_HW_VERSION_MINOR == 3)
+#if (CUSTOM_HW_VERSION_MINOR >= 3)
     #define BEEPER_GPIO_PORT  GPIOC
     #define BEEPER_GPIO_PIN 13
   #else
@@ -160,17 +160,17 @@ float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
 
 void set_custom_headlight(bool state) {
     if (state) {
-        // GPIOB_PIN6 = HIGH;
+       FWD_LIGHT_ON();
     } else {
-        // GPIOB_PIN6 = LOW;
+       FWD_LIGHT_OFF();
     }
 }
 
 void set_custom_brakelight(bool state) {
     if (state) {
-        // GPIOB_PIN7 = HIGH;
+        REAR_LIGHT_ON();
     } else {
-        // GPIOB_PIN7 = LOW;
+         REAR_LIGHT_OFF();
     }
 }
 
@@ -183,6 +183,7 @@ void ext_dcdc_init()
         EXT_DCDC_PIN,
         PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
     );
+    ext_dcdc_enable(false);
 }
 
 void custom_lights_control_init(
@@ -207,7 +208,8 @@ void custom_lights_control_init(
         REAR_LIGHT_PIN,
         PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
     );
-  
+  FWD_LIGHT_OFF();
+  REAR_LIGHT_OFF();
 }
 
 
@@ -329,7 +331,7 @@ void beeper_init()
 
 void ext_beeper_on()
 {
-    EXT_BEEPER_ON() ;
+   VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN);
 
 }
 void ext_beeper_off(){
