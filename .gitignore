@@ -4,7 +4,6 @@ package_README-gen.md
 ui.qml
 .vscode/*
 *.list
-*.vescpkg
 
 *.bin
 *.d
