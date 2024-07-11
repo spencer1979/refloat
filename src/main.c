@@ -20,7 +20,6 @@
 #include "balance_filter.h"
 
 #include "vesc_c_if.h"
-
 #include "atr.h"
 #include "charging.h"
 #include "footpad_sensor.h"
@@ -37,7 +36,7 @@
 #include "konami.h"
 #include <math.h>
 #include <string.h>
-
+#include "custom_hw.h"
 HEADER
 
 typedef enum {
@@ -180,7 +179,7 @@ static const FootpadSensorState flywheel_konami_sequence[] = {
 
         Konami flywheel_konami;
 
-        // SPesc
+        CustomLightControl clc;
 
     } data;
 
@@ -189,14 +188,8 @@ static const FootpadSensorState flywheel_konami_sequence[] = {
     static void flywheel_stop(data * d);
     static void cmd_flywheel_toggle(data * d, unsigned char *cfg, int len);
 
-    const VESC_PIN beeper_pin = VESC_PIN_PPM;
 
-#define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
-#define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
 
-void beeper_init() {
-    VESC_IF->io_set_mode(beeper_pin, VESC_PIN_MODE_OUTPUT);
-}
 
 void beeper_update(data *d) {
     if (d->beeper_enabled && (d->beep_num_left > 0)) {
@@ -205,9 +198,9 @@ void beeper_update(data *d) {
             d->beep_countdown = d->beep_duration;
             d->beep_num_left--;
             if (d->beep_num_left & 0x1) {
-                EXT_BEEPER_ON();
+                ext_beeper_on();
             } else {
-                EXT_BEEPER_OFF();
+                ext_beeper_off();
             }
         }
     }
@@ -216,7 +209,7 @@ void beeper_update(data *d) {
 void beeper_enable(data *d, bool enable) {
     d->beeper_enabled = enable;
     if (!enable) {
-        EXT_BEEPER_OFF();
+       ext_beeper_off();
     }
 }
 
@@ -234,7 +227,8 @@ void beep_alert(data *d, int num_beeps, bool longbeep) {
 void beep_off(data *d, bool force) {
     // don't mess with the beeper if we're in the process of doing a multi-beep
     if (force || (d->beep_num_left == 0)) {
-        EXT_BEEPER_OFF();
+        //EXT_BEEPER_OFF();
+        ext_beeper_off();
     }
 }
 
@@ -244,8 +238,9 @@ void beep_on(data *d, bool force) {
     }
     // don't mess with the beeper if we're in the process of doing a multi-beep
     if (force || (d->beep_num_left == 0)) {
-        EXT_BEEPER_ON();
+         ext_beeper_on();
     }
+
 }
 
 static void reconfigure(data *d) {
@@ -1067,6 +1062,8 @@ static void refloat_thd(void *arg) {
     data *d = (data *) arg;
 
     configure(d);
+    VESC_IF->sleep_us(500);
+    ext_dcdc_enable(d->float_conf.custom.ext_dcdc_enable);
 
     while (!VESC_IF->should_terminate()) {
         beeper_update(d);
@@ -1412,7 +1409,9 @@ static void refloat_thd(void *arg) {
             } else {
                 set_current(d, d->pid_value);
             }
-
+            //SPESC hardware 
+            custom_lights_running(&d->clc,d->float_conf.custom.idle_warning_time, d->motor.abs_erpm ,d->pid_value, d->current_time);
+            
             break;
 
         case (STATE_READY):
@@ -1439,21 +1438,29 @@ static void refloat_thd(void *arg) {
                 d->enable_upside_down = false;
                 d->state.darkride = false;
             }
-            if (d->current_time - d->disengage_timer > 1800) {  // alert user after 30 minutes
-                if (d->current_time - d->nag_timer > 60) {  // beep every 60 seconds
-                    d->nag_timer = d->current_time;
-                    float input_voltage = VESC_IF->mc_get_input_voltage_filtered();
-                    if (input_voltage > d->idle_voltage) {
-                        // don't beep if the voltage keeps increasing (board is charging)
-                        d->idle_voltage = input_voltage;
-                    } else {
-                        d->beep_reason = BEEP_IDLE;
-                        beep_alert(d, 2, 1);
-                    }
-                }
-            } else {
-                d->nag_timer = d->current_time;
-                d->idle_voltage = 0;
+            // if (d->current_time - d->disengage_timer > 1800) {  // alert user after 30 minutes
+            //     if (d->current_time - d->nag_timer > 60) {  // beep every 60 seconds
+            //         d->nag_timer = d->current_time;
+            //         float input_voltage = VESC_IF->mc_get_input_voltage_filtered();
+            //         if (input_voltage > d->idle_voltage) {
+            //             // don't beep if the voltage keeps increasing (board is charging)
+            //             d->idle_voltage = input_voltage;
+            //         } else {
+            //             d->beep_reason = BEEP_IDLE;
+            //             beep_alert(d, 2, 1);
+            //         }
+            //     }
+            // } else {
+            //     d->nag_timer = d->current_time;
+            //     d->idle_voltage = 0;
+            // }
+
+            bool is_warning;
+            is_warning=custom_lights_idle(&d->clc ,d->current_time    );
+            if (is_warning) 
+            {
+                d->beep_reason = BEEP_IDLE;
+                beep_alert(d, 2, 1);
             }
 
             if ((d->current_time - d->fault_angle_pitch_timer) > 1) {
@@ -2661,11 +2668,18 @@ INIT_FUN(lib_info *info) {
     log_msg("Initializing Refloat v" PACKAGE_VERSION);
 
     data *d = VESC_IF->malloc(sizeof(data));
-    if (!d) {
+  
+
+    if (!d ) {
         log_error("Out of memory, startup failed.");
         return false;
     }
     data_init(d);
+
+    //SPEsc hardware 
+    custom_lights_control_init( &d->clc , d->float_conf.custom.lights_mode,d->float_conf.custom.idle_warning_time );
+    ext_dcdc_init();
+    //SPEsc hardware 
 
     info->stop_fun = stop;
     info->arg = d;
