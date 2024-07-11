@@ -24,21 +24,17 @@
 #include "atr.h"
 #include "charging.h"
 #include "footpad_sensor.h"
-#include "lcm.h"
 #include "leds.h"
 #include "motor_data.h"
 #include "state.h"
 #include "torque_tilt.h"
 #include "utils.h"
-
 #include "conf/buffer.h"
 #include "conf/conf_general.h"
 #include "conf/confparser.h"
 #include "conf/confxml.h"
 #include "conf/datatypes.h"
-
 #include "konami.h"
-
 #include <math.h>
 #include <string.h>
 
@@ -61,187 +57,6 @@ typedef enum {
 static const FootpadSensorState flywheel_konami_sequence[] = {
     FS_LEFT, FS_NONE, FS_RIGHT, FS_NONE, FS_LEFT, FS_NONE, FS_RIGHT
 };
-
-/**
- * *****************************
- * SPESC Hardware define Start * 
- * *****************************
- * */ 
-#define USE_CUSTOM_HW  
-#define CUSTOM_HW_VERSION_MAJOR 3
-#define CUSTOM_HW_VERSION_MINOR 3
-#define ESP32_COMMAND_ID 102
-#define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
-
-/**Head light blink var */
-#define SEC_TO_MILLS 1000
-#define LIGHT_BLINK_TIME_MIN 300.00	 // blink 0.3 seconds
-#define LIGHT_BLINK_TIME_MAX 1500.00	 // blink 1.5 seconds
-#define BRK_LIGHT_BLINK_TIME 150.00 // 150 ms rear light blink when brake  .
-/**Lights GPIO  */
-#if (CUSTOM_HW_VERSION_MAJOR <=2)
-#define REAR_LIGHT_GPIO GPIOB
-#define REAR_LIGHT_PIN 7
-#define FWD_LIGHT_GPIO GPIOB
-#define FWD_LIGHT_PIN 5
-#else
-#define FWD_LIGHT_GPIO GPIOC
-#define FWD_LIGHT_PIN 5
-#define REAR_LIGHT_GPIO GPIOB
-#define REAR_LIGHT_PIN 5
-#endif
-/**Light off /on macro  */
-#define FWD_LIGHT_ON() VESC_IF->set_pad(FWD_LIGHT_GPIO, FWD_LIGHT_PIN)
-#define FWD_LIGHT_OFF() VESC_IF->clear_pad(FWD_LIGHT_GPIO, FWD_LIGHT_PIN)
-#define REAR_LIGHT_ON() VESC_IF->set_pad(REAR_LIGHT_GPIO, REAR_LIGHT_PIN)
-#define REAR_LIGHT_OFF() VESC_IF->clear_pad(REAR_LIGHT_GPIO, REAR_LIGHT_PIN)
-/**FAN Control GPIO */
-// #define FAN_GPIO		GPIOC
-// #define FAN_PIN			12
-
-/** external dcdc control gpio */
-#define EXT_DCDC_GPIO GPIOD
-#define EXT_DCDC_PIN 2
-#define EXT_DCDC_ON() VESC_IF->set_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
-#define EXT_DCDC_OFF() VESC_IF->clear_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
-
-//燈光控制狀態結構體
-typedef struct {
-    float last_toggle_time;
-    float last_brake_flash_time;
-    CUSTOM_COB_LIGHT_MODE light_mode;
-    bool headlight_state;
-    bool brakelight_state;
-    float toggle_interval; //頭燈和煞車燈的交替時間
-    float flash_interval;//煞車燈的閃爍時間
-} CustomLightControl;
-
-// Function for SPESC Hardware 
-float utils_map(float x, float in_min, float in_max, float out_min, float out_max) {
-    if (x < in_min) {
-        return out_min;
-    } else if (x > in_max) {
-        return out_max;
-    }
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-void custom_lights_control_init(CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode) {
-    state->last_toggle_time = 0;
-    state->last_brake_flash_time = 0;
-    state->light_mode = light_mode;
-    state->headlight_state = false;
-    state->brakelight_state = false;
-    state->toggle_interval = LIGHT_BLINK_TIME_MAX;
-    state->flash_interval = BRK_LIGHT_BLINK_TIME;
-    // 初始化gpio
-    VESC_IF->set_pad_mode(
-        FWD_LIGHT_GPIO,
-        FWD_LIGHT_PIN,
-        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
-    );
-    VESC_IF->set_pad_mode(
-        REAR_LIGHT_GPIO,
-        REAR_LIGHT_PIN,
-        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
-    );
-    VESC_IF->set_pad_mode(
-        EXT_DCDC_GPIO,
-        EXT_DCDC_PIN,
-        PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
-    );
-}
-
-float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
-    switch (mode) {
-    case IDLE_WARNING_TIME_DISABLE:
-        return 0;
-    case IDLE_WARNING_TIME_1M:
-        return 60;
-    case IDLE_WARNING_TIME_5M:
-        return 300;
-    case IDLE_WARNING_TIME_10M:
-        return 600;
-    case IDLE_WARNING_TIME_30M:
-        return 1800;
-    case IDLE_WARNING_TIME_60M:
-        return 3600;
-    case IDLE_WARNING_TIME_120M:
-        return 7200;
-    default:
-        return 0;
-    }
-}
-
-void set_custom_headlight(bool state) {
-    if (state) {
-        // GPIOB_PIN6 = HIGH;
-    } else {
-        // GPIOB_PIN6 = LOW;
-    }
-}
-
-void set_custom_brakelight(bool state) {
-    if (state) {
-        // GPIOB_PIN7 = HIGH;
-    } else {
-        // GPIOB_PIN7 = LOW;
-    }
-}
-
-void control_lights(
-    CustomLightControl *light_state,
-    State *state,
-    float abs_erpm,
-    float pid_value,
-    float system_time
-) {
-    // 如果马达未转动，关闭头灯和刹车灯
-    if (abs_erpm >= 20 && state->state == STATE_RUNNING) {
-
-        if (pid_value > -6) {
-            if (light_state->light_mode == COB_LIGHT_OFF) {
-
-                set_custom_headlight(false);
-                set_custom_brakelight(false);
-            } else if (light_state->light_mode == COB_LIGHT_FLASH) {
-
-                if ((system_time - light_state->last_toggle_time) * SEC_TO_MILLS >=
-                    light_state->toggle_interval) {
-                    light_state->toggle_interval = utils_map(
-                        abs_erpm, 300.00, 4000.00, LIGHT_BLINK_TIME_MAX, LIGHT_BLINK_TIME_MIN
-                    );  // 映射abs_erpm 為閃爍時間
-                    light_state->headlight_state = !light_state->headlight_state;
-                    light_state->brakelight_state = !light_state->headlight_state;  // 交替状态
-                    set_custom_headlight(light_state->headlight_state);
-                    set_custom_brakelight(light_state->brakelight_state);
-                    light_state->last_toggle_time = system_time;
-                }
-
-            } else if (light_state->light_mode == COB_LIGHT_FULL_ON) {
-                set_custom_headlight(true);
-                set_custom_brakelight(true);
-            }
-
-        } else {  // 如果煞車，依照設定的閃爍時間間隔閃爍煞車燈
-        }
-    } else {  // 非馬達轉動時間 , 如果燈模式為全亮則開始計時,閒置多久關閉燈並產生buzzer
-
-        if (light_state->light_mode == COB_LIGHT_FULL_ON) {
-            set_custom_headlight(true);
-            set_custom_brakelight(true);
-
-        } else {
-            set_custom_headlight(false);
-            set_custom_brakelight(false);
-        }
-    }
-}
-    /**
-     * *****************************
-     * SPESC Hardware define End *
-     * *****************************
-     * */
 
     // This is all persistent state of the application, which will be allocated in init. It
     // is put here because variables can only be read-only when this program is loaded
@@ -269,10 +84,6 @@ void control_lights(
         bool beeper_enabled;
 
         Leds leds;
-
-        // Lights Control Module - external lights control
-        LcmData lcm;
-
         Charging charging;
 
         // Config values
@@ -446,8 +257,6 @@ static void reconfigure(data *d) {
 
 static void configure(data *d) {
     state_init(&d->state, d->float_conf.disabled);
-
-    lcm_configure(&d->lcm, &d->float_conf.leds);
 
     // This timer is used to determine how long the board has been disengaged / idle
     d->disengage_timer = d->current_time;
@@ -1783,8 +1592,6 @@ static void data_init(data *d) {
     read_cfg_from_eeprom(&d->float_conf);
 
     d->odometer = VESC_IF->mc_get_odometer();
-
-    lcm_init(&d->lcm, &d->float_conf.hardware.leds);
     charging_init(&d->charging);
 }
 
@@ -2590,7 +2397,7 @@ static void send_realtime_data2(data *d) {
     SEND_APP_DATA(buffer, bufsize, ind);
 }
 
-static void lights_control_request(CfgLeds *leds, uint8_t *buffer, size_t len, LcmData *lcm) {
+static void lights_control_request(CfgLeds *leds, uint8_t *buffer, size_t len) {
     if (len < 2) {
         return;
     }
@@ -2607,9 +2414,6 @@ static void lights_control_request(CfgLeds *leds, uint8_t *buffer, size_t len, L
             leds->headlights_on = value & 0x2;
         }
 
-        if (lcm->enabled) {
-            lcm_configure(lcm, leds);
-        }
     }
 }
 
@@ -2739,27 +2543,6 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
         }
         return;
     }
-    case COMMAND_LCM_POLL: {
-        lcm_poll_request(&d->lcm, &buffer[2], len - 2);
-        lcm_poll_response(&d->lcm, &d->state, d->footpad_sensor.state, &d->motor, d->pitch);
-        return;
-    }
-    case COMMAND_LCM_LIGHT_INFO: {
-        lcm_light_info_response(&d->lcm);
-        return;
-    }
-    case COMMAND_LCM_LIGHT_CTRL: {
-        lcm_light_ctrl_request(&d->lcm, &buffer[2], len - 2);
-        return;
-    }
-    case COMMAND_LCM_DEVICE_INFO: {
-        lcm_device_info_response(&d->lcm);
-        return;
-    }
-    case COMMAND_LCM_GET_BATTERY: {
-        lcm_get_battery_response(&d->lcm);
-        return;
-    }
     case COMMAND_CHARGING_STATE: {
         charging_state_request(&d->charging, &buffer[2], len - 2, &d->state);
         return;
@@ -2769,7 +2552,7 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
         return;
     }
     case COMMAND_LIGHTS_CONTROL: {
-        lights_control_request(&d->float_conf.leds, &buffer[2], len - 2, &d->lcm);
+        lights_control_request(&d->float_conf.leds, &buffer[2], len - 2);
         lights_control_response(&d->float_conf.leds);
         return;
     }
