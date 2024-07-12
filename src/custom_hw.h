@@ -33,27 +33,18 @@ typedef struct {
     float last_brake_flash_time;
     float last_idle_time;
     CUSTOM_COB_LIGHT_MODE light_mode;
-    bool headlight_state;
-    bool brakelight_state;
+    bool toggle_light_state;
+    bool brake_light_state;
     float light_toggle_interval;  // 頭燈和煞車燈的交替時間
     float idle_interval;  // 閒置時間,計時器假如10分鐘,會減一分鐘, 直到最後為1分鐘蜂鳴器響一次
 } CustomLightControl;
 
 void ext_dcdc_init();
-
-void custom_lights_control_init(CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode, CUSTOM_IDLE_TIME mode);
-
-void custom_lights_running(
-    CustomLightControl *light_state,
-    CUSTOM_IDLE_TIME mode,
-    float abs_erpm,
-    float pid_value,
-    float system_time
-);
-
-bool custom_lights_idle(CustomLightControl *light_state, float system_time);
-
-void ext_dcdc_enable( bool enable );
 void beeper_init();
+void custom_lights_init(CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode, CUSTOM_IDLE_TIME mode);
+void custom_lights_running(CustomLightControl *light_state,float abs_erpm,float pid_value,float system_time);
+void custom_lights_idle(CUSTOM_COB_LIGHT_MODE mode);
+void custom_lights_off();
+void ext_dcdc_enable( bool enable );
 void ext_beeper_on();
 void ext_beeper_off();

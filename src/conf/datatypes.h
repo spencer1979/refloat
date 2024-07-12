@@ -182,6 +182,7 @@ typedef struct {
 } CfgHardware;
 
 typedef struct{
+
     CUSTOM_COB_LIGHT_MODE lights_mode ;
 	bool ext_dcdc_enable ;
 	CUSTOM_IDLE_TIME   idle_warning_time;

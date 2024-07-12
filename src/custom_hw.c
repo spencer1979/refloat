@@ -29,11 +29,10 @@
 /** external dcdc control gpio */
 #define EXT_DCDC_GPIO GPIOD
 #define EXT_DCDC_PIN 2
-
 #define EXT_DCDC_ON() VESC_IF->set_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
 #define EXT_DCDC_OFF() VESC_IF->clear_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
 
-/**Lights GPIO  */
+/**Lights gpio */
 #if (CUSTOM_HW_VERSION_MAJOR <= 2)
 #define REAR_LIGHT_GPIO GPIOB
 #define REAR_LIGHT_PIN 7
@@ -54,61 +53,28 @@
 
 /**Head light blink  default */
 #define SEC_TO_MILLS 1000
-#define LIGHT_BLINK_TIME_MIN 300.00	 // 最小前後燈交替時間
+#define LIGHT_BLINK_TIME_MIN 250.00	 // 最小前後燈交替時間
 #define LIGHT_BLINK_TIME_MAX 1500.00	 // 最大前後燈交替時間 , 交替時間隨著轉變快.
 #define BRK_LIGHT_BLINK_TIME 150.00 // 煞車時閃爍時間
-/**
- * *****************************
- * SPESC Hardware define Start *
- * *****************************
- * */
-//#define USE_CUSTOM_HW
+
 
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
 
-//Buzzer IO 
-#if (CUSTOM_HW_VERSION_MINOR >= 3)
+/**FAN Control GPIO */
+// #define FAN_GPIO		GPIOC
+// #define FAN_PIN			12
+
+//Buzzer gpio
+#if (CUSTOM_HW_VERSION_MINOR >= 3 && CUSTOM_HW_VERSION_MAJOR >= 3 )
     #define BEEPER_GPIO_PORT  GPIOC
     #define BEEPER_GPIO_PIN 13
   #else
     #define BEEPER_GPIO_PORT GPIOB
     #define BEEPER_GPIO_PIN 9
   #endif
-  
-
-/**FAN Control GPIO */
-// #define FAN_GPIO		GPIOC
-// #define FAN_PIN			12
-
-/** external dcdc control gpio */
-#define EXT_DCDC_GPIO GPIOD
-#define EXT_DCDC_PIN 2
-
-#define EXT_DCDC_ON() VESC_IF->set_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
-#define EXT_DCDC_OFF() VESC_IF->clear_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
-
-/**Lights GPIO  */
-#if (CUSTOM_HW_VERSION_MAJOR <= 2)
-#define REAR_LIGHT_GPIO GPIOB
-#define REAR_LIGHT_PIN 7
-#define FWD_LIGHT_GPIO GPIOB
-#define FWD_LIGHT_PIN 5
-#else
-#define FWD_LIGHT_GPIO GPIOC
-#define FWD_LIGHT_PIN 5
-#define REAR_LIGHT_GPIO GPIOB
-#define REAR_LIGHT_PIN 5
-#endif
-
-/**Light off /on macro  */
-#define FWD_LIGHT_ON() VESC_IF->set_pad(FWD_LIGHT_GPIO, FWD_LIGHT_PIN)
-#define FWD_LIGHT_OFF() VESC_IF->clear_pad(FWD_LIGHT_GPIO, FWD_LIGHT_PIN)
-#define REAR_LIGHT_ON() VESC_IF->set_pad(REAR_LIGHT_GPIO, REAR_LIGHT_PIN)
-#define REAR_LIGHT_OFF() VESC_IF->clear_pad(REAR_LIGHT_GPIO, REAR_LIGHT_PIN)
-
-
 #define EXT_BEEPER_ON() VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
 #define EXT_BEEPER_OFF() VESC_IF->clear_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
+
 // Function to map a value from one range to another with clamping.
 // Parameters:
 //   x - The value to map.
@@ -137,7 +103,7 @@ float map_value(float x, float in_min, float in_max, float out_min, float out_ma
 }
 
 
-float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
+static float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
     switch (mode) {
     case IDLE_WARNING_TIME_DISABLE:
         return 0.0f;
@@ -158,7 +124,7 @@ float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
     }
 }
 
-void set_custom_headlight(bool state) {
+static void set_custom_headlight(bool state) {
     if (state) {
        FWD_LIGHT_ON();
     } else {
@@ -166,7 +132,7 @@ void set_custom_headlight(bool state) {
     }
 }
 
-void set_custom_brakelight(bool state) {
+static void set_custom_brakelight(bool state) {
     if (state) {
         REAR_LIGHT_ON();
     } else {
@@ -183,22 +149,20 @@ void ext_dcdc_init()
         EXT_DCDC_PIN,
         PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
     );
-    ext_dcdc_enable(false);
 }
 
-void custom_lights_control_init(
+void custom_lights_init(
     CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode , CUSTOM_IDLE_TIME mode
 ) {
     state->last_light_toggle_time = 0;
     state->last_brake_flash_time = 0;
     state->light_mode = light_mode;
-    state->headlight_state = false;
-    state->brakelight_state = false;
+    state->toggle_light_state = false;
+    state->brake_light_state = false;
     state->light_toggle_interval = LIGHT_BLINK_TIME_MAX;
     state->idle_interval=get_idle_warning_timer( mode);
 
-    
-    VESC_IF->set_pad_mode(
+      VESC_IF->set_pad_mode(
         FWD_LIGHT_GPIO,
         FWD_LIGHT_PIN,
         PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
@@ -208,24 +172,35 @@ void custom_lights_control_init(
         REAR_LIGHT_PIN,
         PAL_STM32_MODE_OUTPUT | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_OTYPE_PUSHPULL
     );
-  FWD_LIGHT_OFF();
-  REAR_LIGHT_OFF();
+        //只有燈全亮時,其他狀態都是熄滅
+    if (light_mode == COB_LIGHT_FULL_ON) {
+        FWD_LIGHT_ON();
+        REAR_LIGHT_ON();
+    } else {
+        FWD_LIGHT_OFF();
+        REAR_LIGHT_OFF();
+    }
 }
-
-
 
 void custom_lights_running(
     CustomLightControl *light_state,
-   CUSTOM_IDLE_TIME mode,
     float abs_erpm,
     float pid_value,
     float system_time
 ) { 
+  static float previous_pid_value =0;
 
-    if (abs_erpm >= 20 ) // 馬達轉動 
+      if (light_state->last_light_toggle_time ==0) {  // 檢查交替閃爍時間 是不是0 , 如為0記住系統時間
+                    light_state->last_light_toggle_time = system_time;
+                }
+                    // 如果煞車，依照設定的閃爍時間間隔閃爍煞車燈 ,
+    if (light_state->last_brake_flash_time ==0) {  // 檢查煞車閃爍時間 是不是0 , 如為0記住系統時間
+                light_state->last_brake_flash_time = system_time;
+            }
+
+    if (abs_erpm >= 100 ) // 馬達轉動 
     {   
-        light_state->last_idle_time=system_time;//重製閒置計時器
-        light_state->idle_interval=get_idle_warning_timer( mode ); //回復設定閒置時間
+
         if (pid_value > -6) {
 
             switch (light_state->light_mode) {
@@ -234,80 +209,56 @@ void custom_lights_running(
                 set_custom_brakelight(false);
                 break;
             case COB_LIGHT_FLASH:
-                if (light_state->last_light_toggle_time ==0) {  // 檢查交替閃爍時間 是不是0 , 如為0記住系統時間
-                    light_state->last_light_toggle_time = system_time;
-                }
                 if ((system_time - light_state->last_light_toggle_time) * SEC_TO_MILLS >= light_state->light_toggle_interval) {  // 判斷計時器是否時間到{
-                    light_state->light_toggle_interval = map_value(
-                        abs_erpm, 300.00, 3000.00, LIGHT_BLINK_TIME_MAX, LIGHT_BLINK_TIME_MIN
-                    );  // 映射abs_erpm 為閃爍時間
+                    light_state->toggle_light_state = !light_state->toggle_light_state;
+                    set_custom_headlight(light_state->toggle_light_state);
+                    set_custom_brakelight(!light_state->toggle_light_state);
+                    light_state->light_toggle_interval = map_value(abs_erpm, 500.00, 2500.00, LIGHT_BLINK_TIME_MAX, LIGHT_BLINK_TIME_MIN);  // 映射abs_erpm 為閃爍時間
+                    light_state->last_light_toggle_time = system_time;  // 重設頭燈閃爍計時器  
                 }
-                light_state->headlight_state = !light_state->headlight_state;
-                light_state->brakelight_state = !light_state->headlight_state;  // 交替状态
-                set_custom_headlight(light_state->headlight_state);
-                set_custom_brakelight(light_state->brakelight_state);
-                light_state->last_light_toggle_time = system_time;  // 重設頭燈閃爍計時器
                 break;
             case COB_LIGHT_FULL_ON:
                 set_custom_headlight(true);
                 set_custom_brakelight(true);
                 break;
             }
-        } else {  // 如果煞車，依照設定的閃爍時間間隔閃爍煞車燈
-
-            // if erpm >0 is forward Brake , erpm < 0 if reverse brake
-            if (light_state->last_brake_flash_time ==
-                0) {  // 檢查煞車閃爍時間 是不是0 , 如為0記住系統時間
-                light_state->last_brake_flash_time = system_time;
-            }
-
-            if ( ( (system_time - light_state->last_brake_flash_time)  * SEC_TO_MILLS ) >= BRK_LIGHT_BLINK_TIME )  // 判斷計時器是否時間到
+        } else {
+            //急煞時會有一個大的負的pid_value 
+           if ( fabsf(pid_value)-fabsf(previous_pid_value ) > 10 )
             {
-                light_state->brakelight_state = !light_state->brakelight_state;
-                set_custom_brakelight(light_state->brakelight_state);
-                // 重置煞車燈計時器
-                light_state->last_brake_flash_time=system_time;
-            }
+                     if ((system_time - light_state->last_brake_flash_time)  * SEC_TO_MILLS  >= BRK_LIGHT_BLINK_TIME )
+                      {
+                         light_state->brake_light_state = !light_state->brake_light_state;
+                         set_custom_brakelight(light_state->brake_light_state);
+                         // 重置煞車燈計時器
+                         light_state->last_brake_flash_time=system_time;
+                      
+                      }  
+                        previous_pid_value=pid_value;
+          
+           }
+            // if erpm >0 is forward Brake , erpm < 0 if reverse brake      
         }
 
     }
 }
 
+void custom_lights_idle(CUSTOM_COB_LIGHT_MODE mode ) {
 
-bool custom_lights_idle(CustomLightControl *light_state, float system_time) {
+    if (mode == COB_LIGHT_FULL_ON) {
+        set_custom_headlight(true);
+        set_custom_brakelight(true);
 
-  
-       if (light_state->light_mode == COB_LIGHT_FULL_ON) {
-           set_custom_headlight(true);
-           set_custom_brakelight(true);
-
-       } else {
-           set_custom_headlight(false);
-           set_custom_brakelight(false);
-       }
-
-       if (system_time - light_state->last_idle_time >=
-           light_state->idle_interval)  // 閒置時間計時器超時
-       {
-           // 關閉所有大燈
-           set_custom_headlight(true);
-           set_custom_brakelight(true);
-           // 蜂鳴器
-
-           // 閒置時間減60秒
-           if (light_state->idle_interval < 60.0f) {
-               light_state->idle_interval = 60.0f;  // 或者進行其他處理，例如設為最小值
-           } else {
-               light_state->idle_interval -= 60.0f;
-           }
-           return true;  // 回傳計時器超時產生警告音
-       }
-     
-
-     return false;
+    } else{
+        set_custom_headlight(false);
+        set_custom_brakelight(false);
+    }
 }
 
-
+void custom_lights_off( ) {
+        set_custom_headlight(false);
+        set_custom_brakelight(false);
+}
 void ext_dcdc_enable( bool enable  )
 {
    if (enable) {
@@ -316,8 +267,6 @@ void ext_dcdc_enable( bool enable  )
         EXT_DCDC_OFF();
     }
 }
-
-
 
 
 void beeper_init()
@@ -331,7 +280,7 @@ void beeper_init()
 
 void ext_beeper_on()
 {
-   VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN);
+   EXT_BEEPER_ON();
 
 }
 void ext_beeper_off(){

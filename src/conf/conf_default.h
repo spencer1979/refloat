@@ -5,7 +5,7 @@
 
 // Angle P
 #ifndef CFG_DFLT_KP
-#define CFG_DFLT_KP 20
+#define CFG_DFLT_KP 25
 #endif
 
 // Rate P
@@ -20,7 +20,7 @@
 
 // Pitch KP
 #ifndef CFG_DFLT_MAHONY_KP
-#define CFG_DFLT_MAHONY_KP 2
+#define CFG_DFLT_MAHONY_KP 1.9
 #endif
 
 // Roll KP
@@ -35,17 +35,17 @@
 
 // Angle P (Braking)
 #ifndef CFG_DFLT_KP_BRAKE
-#define CFG_DFLT_KP_BRAKE 1
+#define CFG_DFLT_KP_BRAKE 0.9
 #endif
 
 // Rate P (Braking)
 #ifndef CFG_DFLT_KP2_BRAKE
-#define CFG_DFLT_KP2_BRAKE 1
+#define CFG_DFLT_KP2_BRAKE 0.7
 #endif
 
 // Loop Hertz
 #ifndef CFG_DFLT_HERTZ
-#define CFG_DFLT_HERTZ 832
+#define CFG_DFLT_HERTZ 800
 #endif
 
 // Pitch Axis Fault Cutoff
@@ -60,12 +60,12 @@
 
 // ADC1 Switch Voltage
 #ifndef CFG_DFLT_FAULT_ADC1
-#define CFG_DFLT_FAULT_ADC1 2
+#define CFG_DFLT_FAULT_ADC1 1.5
 #endif
 
 // ADC2 Switch Voltage
 #ifndef CFG_DFLT_FAULT_ADC2
-#define CFG_DFLT_FAULT_ADC2 2
+#define CFG_DFLT_FAULT_ADC2 1.5
 #endif
 
 // Beep on Sensor Fault
@@ -75,12 +75,12 @@
 
 // Pitch Fault Delay
 #ifndef CFG_DFLT_FAULT_DELAY_PITCH
-#define CFG_DFLT_FAULT_DELAY_PITCH 250
+#define CFG_DFLT_FAULT_DELAY_PITCH 400
 #endif
 
 // Roll Fault Delay
 #ifndef CFG_DFLT_FAULT_DELAY_ROLL
-#define CFG_DFLT_FAULT_DELAY_ROLL 250
+#define CFG_DFLT_FAULT_DELAY_ROLL 400
 #endif
 
 // Half Switch Fault Delay
@@ -100,12 +100,12 @@
 
 // Treat Both Sensors as One (Posi)
 #ifndef CFG_DFLT_FAULT_IS_DUAL_SWITCH
-#define CFG_DFLT_FAULT_IS_DUAL_SWITCH 0
+#define CFG_DFLT_FAULT_IS_DUAL_SWITCH 1
 #endif
 
 // Disable Moving Faults
 #ifndef CFG_DFLT_FAULT_MOVING_FAULT_DISABLED
-#define CFG_DFLT_FAULT_MOVING_FAULT_DISABLED 0
+#define CFG_DFLT_FAULT_MOVING_FAULT_DISABLED 1
 #endif
 
 // Enable Darkride
@@ -115,7 +115,7 @@
 
 // Enable Reverse Stop
 #ifndef CFG_DFLT_FAULT_REVERSESTOP_ENABLED
-#define CFG_DFLT_FAULT_REVERSESTOP_ENABLED 0
+#define CFG_DFLT_FAULT_REVERSESTOP_ENABLED 1
 #endif
 
 // Angle
@@ -165,7 +165,7 @@
 
 // High Voltage Threshold
 #ifndef CFG_DFLT_TILTBACK_HV
-#define CFG_DFLT_TILTBACK_HV 64.5
+#define CFG_DFLT_TILTBACK_HV 100
 #endif
 
 // Angle
@@ -180,7 +180,7 @@
 
 // Low Voltage Threshold
 #ifndef CFG_DFLT_TILTBACK_LV
-#define CFG_DFLT_TILTBACK_LV 45
+#define CFG_DFLT_TILTBACK_LV 48
 #endif
 
 // Return To Level Speed
@@ -195,7 +195,7 @@
 
 // Constant Tiltback ERPM
 #ifndef CFG_DFLT_TILTBACK_CONSTANT_ERPM
-#define CFG_DFLT_TILTBACK_CONSTANT_ERPM 500
+#define CFG_DFLT_TILTBACK_CONSTANT_ERPM 400
 #endif
 
 // Variable Tiltback Rate

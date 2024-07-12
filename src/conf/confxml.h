@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // Constants
-#define DATA_REFLOATCONFIG__SIZE		23387
+#define DATA_REFLOATCONFIG__SIZE		23390
 
 // Variables
 extern uint8_t data_refloatconfig_[];

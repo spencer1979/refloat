@@ -346,6 +346,9 @@ static void configure(data *d) {
     } else {
         beep_alert(d, 1, false);
     }
+    //SPEsc 
+    custom_lights_init(&d->clc ,d->float_conf.custom.lights_mode,d->float_conf.custom.idle_warning_time);
+    ext_dcdc_enable(d->float_conf.custom.ext_dcdc_enable);
 }
 
 static void reset_vars(data *d) {
@@ -1062,8 +1065,6 @@ static void refloat_thd(void *arg) {
     data *d = (data *) arg;
 
     configure(d);
-    VESC_IF->sleep_us(500);
-    ext_dcdc_enable(d->float_conf.custom.ext_dcdc_enable);
 
     while (!VESC_IF->should_terminate()) {
         beeper_update(d);
@@ -1191,6 +1192,7 @@ static void refloat_thd(void *arg) {
         switch (d->state.state) {
         case (STATE_STARTUP):
             // Disable output
+            custom_lights_idle(d->float_conf.custom.lights_mode);
             brake(d);
             if (VESC_IF->imu_startup_done()) {
                 reset_vars(d);
@@ -1383,7 +1385,7 @@ static void refloat_thd(void *arg) {
             } else {
                 d->rate_p = 0;
             }
-
+       
             // Current Limiting!
             float current_limit = d->motor.braking ? d->mc_current_min : d->mc_current_max;
             if (fabsf(new_pid_value) > current_limit) {
@@ -1410,11 +1412,12 @@ static void refloat_thd(void *arg) {
                 set_current(d, d->pid_value);
             }
             //SPESC hardware 
-            custom_lights_running(&d->clc,d->float_conf.custom.idle_warning_time, d->motor.abs_erpm ,d->pid_value, d->current_time);
+            custom_lights_running(&d->clc,d->motor.abs_erpm ,d->pid_value, d->current_time);
             
             break;
-
+ 
         case (STATE_READY):
+         custom_lights_idle(d->float_conf.custom.lights_mode);
             if (d->state.mode == MODE_FLYWHEEL) {
                 if (d->flywheel_abort || d->footpad_sensor.state == FS_BOTH) {
                     flywheel_stop(d);
@@ -1438,31 +1441,27 @@ static void refloat_thd(void *arg) {
                 d->enable_upside_down = false;
                 d->state.darkride = false;
             }
-            // if (d->current_time - d->disengage_timer > 1800) {  // alert user after 30 minutes
-            //     if (d->current_time - d->nag_timer > 60) {  // beep every 60 seconds
-            //         d->nag_timer = d->current_time;
-            //         float input_voltage = VESC_IF->mc_get_input_voltage_filtered();
-            //         if (input_voltage > d->idle_voltage) {
-            //             // don't beep if the voltage keeps increasing (board is charging)
-            //             d->idle_voltage = input_voltage;
-            //         } else {
-            //             d->beep_reason = BEEP_IDLE;
-            //             beep_alert(d, 2, 1);
-            //         }
-            //     }
-            // } else {
-            //     d->nag_timer = d->current_time;
-            //     d->idle_voltage = 0;
-            // }
+            if (d->current_time - d->disengage_timer > d->clc.idle_interval && d->clc.idle_interval >0) {  // 閒置超過時間 
+                
+                custom_lights_off();
 
-            bool is_warning;
-            is_warning=custom_lights_idle(&d->clc ,d->current_time    );
-            if (is_warning) 
-            {
-                d->beep_reason = BEEP_IDLE;
-                beep_alert(d, 2, 1);
+                if (d->current_time - d->nag_timer > 30) {  // beep every 60 seconds
+                    d->nag_timer = d->current_time;
+                    float input_voltage = VESC_IF->mc_get_input_voltage_filtered();
+                    if (input_voltage > d->idle_voltage) {
+                        // don't beep if the voltage keeps increasing (board is charging)
+                        d->idle_voltage = input_voltage;
+                    } else {
+                        d->beep_reason = BEEP_IDLE;
+                        beep_alert(d, 2, 1);
+                    }
+                }
+            } else {
+                d->nag_timer = d->current_time;
+                d->idle_voltage = 0;
             }
 
+   
             if ((d->current_time - d->fault_angle_pitch_timer) > 1) {
                 // 1 second after disengaging - set startup tolerance back to normal (aka tighter)
                 d->startup_pitch_tolerance = d->float_conf.startup_pitch_tolerance;
@@ -1509,6 +1508,7 @@ static void refloat_thd(void *arg) {
             break;
         case (STATE_DISABLED):
             // no set_current, no brake_current
+
             break;
         }
 
@@ -2676,10 +2676,7 @@ INIT_FUN(lib_info *info) {
     }
     data_init(d);
 
-    //SPEsc hardware 
-    custom_lights_control_init( &d->clc , d->float_conf.custom.lights_mode,d->float_conf.custom.idle_warning_time );
-    ext_dcdc_init();
-    //SPEsc hardware 
+
 
     info->stop_fun = stop;
     info->arg = d;
@@ -2717,7 +2714,12 @@ INIT_FUN(lib_info *info) {
     VESC_IF->set_app_data_handler(on_command_received);
     VESC_IF->lbm_add_extension("ext-dbg", ext_dbg);
     VESC_IF->lbm_add_extension("ext-set-fw-version", ext_set_fw_version);
-
+    //SPEsc hardware 
+    custom_lights_init( &d->clc , d->float_conf.custom.lights_mode,d->float_conf.custom.idle_warning_time );
+    ext_dcdc_init();
+    
+    
+    //SPEsc hardware 
     return true;
 }
 
