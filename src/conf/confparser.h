@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // Constants
-#define REFLOATCONFIG_SIGNATURE		2297714290
+#define REFLOATCONFIG_SIGNATURE		2707646123
 
 // Functions
 int32_t confparser_serialize_refloatconfig(uint8_t *buffer, const RefloatConfig *conf);

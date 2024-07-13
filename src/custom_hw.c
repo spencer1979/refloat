@@ -1,5 +1,5 @@
 // Copyright 2022 Benjamin Vedder <benjamin@vedder.se>
-// Copyright 2024 Lukas Hrazky
+// Copyright 2024 Spencer Chen 
 //
 // This file is part of the Refloat VESC package.
 //
@@ -53,9 +53,9 @@
 
 /**Head light blink  default */
 #define SEC_TO_MILLS 1000
-#define LIGHT_BLINK_TIME_MIN 250.00	 // 最小前後燈交替時間
-#define LIGHT_BLINK_TIME_MAX 1500.00	 // 最大前後燈交替時間 , 交替時間隨著轉變快.
-#define BRK_LIGHT_BLINK_TIME 150.00 // 煞車時閃爍時間
+#define LIGHT_BLINK_TIME_MIN 200.00	 // 最小前後燈交替時間
+#define LIGHT_BLINK_TIME_MAX 1200.00	 // 最大前後燈交替時間 , 交替時間隨著轉變快.
+#define BRK_LIGHT_BLINK_TIME 100.00 // 煞車時閃爍時間
 
 
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
@@ -103,27 +103,6 @@ float map_value(float x, float in_min, float in_max, float out_min, float out_ma
 }
 
 
-static float get_idle_warning_timer(CUSTOM_IDLE_TIME mode) {
-    switch (mode) {
-    case IDLE_WARNING_TIME_DISABLE:
-        return 0.0f;
-    case IDLE_WARNING_TIME_1M:
-        return 60.0f;
-    case IDLE_WARNING_TIME_5M:
-        return 300.0f;
-    case IDLE_WARNING_TIME_10M:
-        return 600.0f;
-    case IDLE_WARNING_TIME_30M:
-        return 1800.0f;
-    case IDLE_WARNING_TIME_60M:
-        return 3600.0f;
-    case IDLE_WARNING_TIME_120M:
-        return 7200.0f;
-    default:
-        return 0.0f;
-    }
-}
-
 static void set_custom_headlight(bool state) {
     if (state) {
        FWD_LIGHT_ON();
@@ -151,16 +130,14 @@ void ext_dcdc_init()
     );
 }
 
-void custom_lights_init(
-    CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode , CUSTOM_IDLE_TIME mode
-) {
+void custom_lights_init( CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode )
+ {
     state->last_light_toggle_time = 0;
     state->last_brake_flash_time = 0;
-    state->light_mode = light_mode;
     state->toggle_light_state = false;
     state->brake_light_state = false;
     state->light_toggle_interval = LIGHT_BLINK_TIME_MAX;
-    state->idle_interval=get_idle_warning_timer( mode);
+    state->light_toggle_interval=false;
 
       VESC_IF->set_pad_mode(
         FWD_LIGHT_GPIO,
@@ -182,12 +159,8 @@ void custom_lights_init(
     }
 }
 
-void custom_lights_running(
-    CustomLightControl *light_state,
-    float abs_erpm,
-    float pid_value,
-    float system_time
-) { 
+void custom_lights_running(CustomLightControl *light_state, CUSTOM_COB_LIGHT_MODE light_mode ,float abs_erpm,float pid_value,float system_time) 
+{ 
   static float previous_pid_value =0;
 
       if (light_state->last_light_toggle_time ==0) {  // 檢查交替閃爍時間 是不是0 , 如為0記住系統時間
@@ -203,7 +176,7 @@ void custom_lights_running(
 
         if (pid_value > -6) {
 
-            switch (light_state->light_mode) {
+            switch (light_mode) {
             case COB_LIGHT_OFF:
                 set_custom_headlight(false);
                 set_custom_brakelight(false);

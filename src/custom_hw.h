@@ -1,5 +1,5 @@
 // Copyright 2022 Benjamin Vedder <benjamin@vedder.se>
-// Copyright 2024 Lukas Hrazky
+// Copyright 2024 Spencer Chen 
 //
 // This file is part of the Refloat VESC package.
 //
@@ -31,18 +31,17 @@
 typedef struct {
     float last_light_toggle_time;
     float last_brake_flash_time;
-    float last_idle_time;
-    CUSTOM_COB_LIGHT_MODE light_mode;
     bool toggle_light_state;
     bool brake_light_state;
     float light_toggle_interval;  // 頭燈和煞車燈的交替時間
-    float idle_interval;  // 閒置時間,計時器假如10分鐘,會減一分鐘, 直到最後為1分鐘蜂鳴器響一次
+    bool is_idle_too_long;
+
 } CustomLightControl;
 
 void ext_dcdc_init();
 void beeper_init();
-void custom_lights_init(CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode, CUSTOM_IDLE_TIME mode);
-void custom_lights_running(CustomLightControl *light_state,float abs_erpm,float pid_value,float system_time);
+void custom_lights_init(CustomLightControl *state, CUSTOM_COB_LIGHT_MODE light_mode );
+void custom_lights_running(CustomLightControl *light_state, CUSTOM_COB_LIGHT_MODE light_mode ,float abs_erpm,float pid_value,float system_time);
 void custom_lights_idle(CUSTOM_COB_LIGHT_MODE mode);
 void custom_lights_off();
 void ext_dcdc_enable( bool enable );

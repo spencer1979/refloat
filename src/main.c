@@ -347,7 +347,7 @@ static void configure(data *d) {
         beep_alert(d, 1, false);
     }
     //SPEsc 
-    custom_lights_init(&d->clc ,d->float_conf.custom.lights_mode,d->float_conf.custom.idle_warning_time);
+    custom_lights_init(&d->clc ,d->float_conf.custom.lights_mode);
     ext_dcdc_enable(d->float_conf.custom.ext_dcdc_enable);
 }
 
@@ -1192,7 +1192,6 @@ static void refloat_thd(void *arg) {
         switch (d->state.state) {
         case (STATE_STARTUP):
             // Disable output
-            custom_lights_idle(d->float_conf.custom.lights_mode);
             brake(d);
             if (VESC_IF->imu_startup_done()) {
                 reset_vars(d);
@@ -1412,12 +1411,13 @@ static void refloat_thd(void *arg) {
                 set_current(d, d->pid_value);
             }
             //SPESC hardware 
-            custom_lights_running(&d->clc,d->motor.abs_erpm ,d->pid_value, d->current_time);
+             d->clc.is_idle_too_long=false; //重置閒置太久旗標
+            custom_lights_running(&d->clc,d->float_conf.custom.lights_mode,d->motor.abs_erpm ,d->pid_value, d->current_time);
             
             break;
  
         case (STATE_READY):
-         custom_lights_idle(d->float_conf.custom.lights_mode);
+            
             if (d->state.mode == MODE_FLYWHEEL) {
                 if (d->flywheel_abort || d->footpad_sensor.state == FS_BOTH) {
                     flywheel_stop(d);
@@ -1441,11 +1441,12 @@ static void refloat_thd(void *arg) {
                 d->enable_upside_down = false;
                 d->state.darkride = false;
             }
-            if (d->current_time - d->disengage_timer > d->clc.idle_interval && d->clc.idle_interval >0) {  // 閒置超過時間 
+
+           if ((d->current_time - d->disengage_timer ) > ((d->float_conf.custom.idle_warning_time == 0) ? 0 : ((1 << d->float_conf.custom.idle_warning_time) * 60))) {  // 閒置超過時間 
                 
                 custom_lights_off();
-
-                if (d->current_time - d->nag_timer > 30) {  // beep every 60 seconds
+                d->clc.is_idle_too_long=true; // 已經閒置過久,燈光全滅
+                if (d->current_time - d->nag_timer > 10) {  // beep every 60 seconds
                     d->nag_timer = d->current_time;
                     float input_voltage = VESC_IF->mc_get_input_voltage_filtered();
                     if (input_voltage > d->idle_voltage) {
@@ -1512,6 +1513,9 @@ static void refloat_thd(void *arg) {
             break;
         }
 
+        if (d->state.state != STATE_RUNNING && !d->clc.is_idle_too_long) {
+        custom_lights_idle(d->float_conf.custom.lights_mode);
+        }
         VESC_IF->sleep_us(d->loop_time_us);
     }
 }
@@ -2715,7 +2719,7 @@ INIT_FUN(lib_info *info) {
     VESC_IF->lbm_add_extension("ext-dbg", ext_dbg);
     VESC_IF->lbm_add_extension("ext-set-fw-version", ext_set_fw_version);
     //SPEsc hardware 
-    custom_lights_init( &d->clc , d->float_conf.custom.lights_mode,d->float_conf.custom.idle_warning_time );
+    custom_lights_init( &d->clc , d->float_conf.custom.lights_mode);
     ext_dcdc_init();
     
     

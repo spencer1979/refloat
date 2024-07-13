@@ -735,7 +735,7 @@
 
 // Idle Warning Timer
 #ifndef CFG_SPESC_IDLE_TIME
-#define CFG_SPESC_IDLE_TIME 0
+#define CFG_SPESC_IDLE_TIME 1
 #endif
 
 // Enable Engine Sound
