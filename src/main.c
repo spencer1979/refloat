@@ -1442,7 +1442,7 @@ static void refloat_thd(void *arg) {
                 d->state.darkride = false;
             }
 
-           if ((d->current_time - d->disengage_timer ) > ((d->float_conf.custom.idle_warning_time == 0) ? 0 : ((1 << d->float_conf.custom.idle_warning_time) * 60))) {  // 閒置超過時間 
+           if ((d->current_time - d->disengage_timer ) >((1 << d->float_conf.custom.idle_warning_time) * 60) && (d->float_conf.custom.idle_warning_time != 0 )) {  // 閒置超過時間 
                 
                 custom_lights_off();
                 d->clc.is_idle_too_long=true; // 已經閒置過久,燈光全滅
