@@ -27,10 +27,18 @@
 // #define FAN_PIN			12
 
 /** external dcdc control gpio */
+
+#if (CUSTOM_HW_VERSION_MAJOR == 4) //MK2 
+#define EXT_DCDC_GPIO GPIOC
+#define EXT_DCDC_PIN 12
+#define EXT_DCDC_ON() VESC_IF->set_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
+#define EXT_DCDC_OFF() VESC_IF->clear_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
+#else
 #define EXT_DCDC_GPIO GPIOD
 #define EXT_DCDC_PIN 2
 #define EXT_DCDC_ON() VESC_IF->set_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
 #define EXT_DCDC_OFF() VESC_IF->clear_pad(EXT_DCDC_GPIO, EXT_DCDC_PIN)
+#endif
 
 /**Lights gpio */
 #if (CUSTOM_HW_VERSION_MAJOR <= 2)
@@ -65,13 +73,17 @@
 // #define FAN_PIN			12
 
 //Buzzer gpio
-#if (CUSTOM_HW_VERSION_MINOR >= 3 && CUSTOM_HW_VERSION_MAJOR >= 3 )
+#if (CUSTOM_HW_VERSION_MINOR == 3 && CUSTOM_HW_VERSION_MAJOR == 3)
     #define BEEPER_GPIO_PORT  GPIOC
     #define BEEPER_GPIO_PIN 13
-  #else
+#elif ( CUSTOM_HW_VERSION_MAJOR == 4) //MK2 
+    #define BEEPER_GPIO_PORT  GPIOB
+    #define BEEPER_GPIO_PIN 12
+#else
     #define BEEPER_GPIO_PORT GPIOB
     #define BEEPER_GPIO_PIN 9
-  #endif
+#endif
+
 #define EXT_BEEPER_ON() VESC_IF->set_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
 #define EXT_BEEPER_OFF() VESC_IF->clear_pad(BEEPER_GPIO_PORT, BEEPER_GPIO_PIN)
 
