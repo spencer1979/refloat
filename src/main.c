@@ -41,7 +41,7 @@
 
 #include <math.h>
 #include <string.h>
-
+#include "custom_hw.h"
 HEADER
 
 typedef enum {
@@ -192,14 +192,8 @@ static void set_current(data *d, float current);
 static void flywheel_stop(data *d);
 static void cmd_flywheel_toggle(data *d, unsigned char *cfg, int len);
 
-const VESC_PIN beeper_pin = VESC_PIN_PPM;
 
-#define EXT_BEEPER_ON() VESC_IF->io_write(beeper_pin, 1)
-#define EXT_BEEPER_OFF() VESC_IF->io_write(beeper_pin, 0)
 
-void beeper_init() {
-    VESC_IF->io_set_mode(beeper_pin, VESC_PIN_MODE_OUTPUT);
-}
 
 void beeper_update(data *d) {
     if (d->beeper_enabled && (d->beep_num_left > 0)) {
@@ -208,9 +202,9 @@ void beeper_update(data *d) {
             d->beep_countdown = d->beep_duration;
             d->beep_num_left--;
             if (d->beep_num_left & 0x1) {
-                EXT_BEEPER_ON();
+                ext_beeper_on();
             } else {
-                EXT_BEEPER_OFF();
+                ext_beeper_off();
             }
         }
     }
@@ -219,7 +213,7 @@ void beeper_update(data *d) {
 void beeper_enable(data *d, bool enable) {
     d->beeper_enabled = enable;
     if (!enable) {
-        EXT_BEEPER_OFF();
+       ext_beeper_off();
     }
 }
 
@@ -237,7 +231,8 @@ void beep_alert(data *d, int num_beeps, bool longbeep) {
 void beep_off(data *d, bool force) {
     // don't mess with the beeper if we're in the process of doing a multi-beep
     if (force || (d->beep_num_left == 0)) {
-        EXT_BEEPER_OFF();
+        //EXT_BEEPER_OFF();
+        ext_beeper_off();
     }
 }
 
@@ -247,7 +242,7 @@ void beep_on(data *d, bool force) {
     }
     // don't mess with the beeper if we're in the process of doing a multi-beep
     if (force || (d->beep_num_left == 0)) {
-        EXT_BEEPER_ON();
+         ext_beeper_on();
     }
 }
 
@@ -356,6 +351,9 @@ static void configure(data *d) {
     } else {
         beep_alert(d, 1, false);
     }
+    //SPEsc 
+    custom_lights_init(&d->clc ,d->float_conf.custom.lights_mode);
+    ext_dcdc_enable(d->float_conf.custom.ext_dcdc_enable);
 }
 
 static void reset_vars(data *d) {
@@ -1416,7 +1414,10 @@ static void refloat_thd(void *arg) {
             } else {
                 set_current(d, d->pid_value);
             }
-
+            //SPESC hardware 
+             d->clc.is_idle_too_long=false; //重置閒置太久旗標
+            custom_lights_running(&d->clc,d->float_conf.custom.lights_mode,d->motor.abs_erpm ,d->pid_value, d->current_time);
+            
             break;
 
         case (STATE_READY):
@@ -1443,8 +1444,12 @@ static void refloat_thd(void *arg) {
                 d->enable_upside_down = false;
                 d->state.darkride = false;
             }
-            if (d->current_time - d->disengage_timer > 1800) {  // alert user after 30 minutes
-                if (d->current_time - d->nag_timer > 60) {  // beep every 60 seconds
+
+           if ((d->current_time - d->disengage_timer ) >((1 << d->float_conf.custom.idle_warning_time) * 60) && (d->float_conf.custom.idle_warning_time != 0 )) {  // ?????? 
+                
+                custom_lights_off();
+                d->clc.is_idle_too_long=true; // 已經閒置過久,燈光全滅
+                if (d->current_time - d->nag_timer > 10) {  // beep every 60 seconds
                     d->nag_timer = d->current_time;
                     float input_voltage = VESC_IF->mc_get_input_voltage_filtered();
                     if (input_voltage > d->idle_voltage) {
@@ -1509,6 +1514,9 @@ static void refloat_thd(void *arg) {
             break;
         }
 
+        if (d->state.state != STATE_RUNNING && !d->clc.is_idle_too_long) {
+        custom_lights_idle(d->float_conf.custom.lights_mode);
+        }
         VESC_IF->sleep_us(d->loop_time_us);
     }
 }
@@ -2735,7 +2743,12 @@ INIT_FUN(lib_info *info) {
     VESC_IF->set_app_data_handler(on_command_received);
     VESC_IF->lbm_add_extension("ext-dbg", ext_dbg);
     VESC_IF->lbm_add_extension("ext-set-fw-version", ext_set_fw_version);
-
+    //SPEsc hardware 
+    custom_lights_init( &d->clc , d->float_conf.custom.lights_mode);
+    ext_dcdc_init();
+    
+    
+    //SPEsc hardware 
     return true;
 }
 

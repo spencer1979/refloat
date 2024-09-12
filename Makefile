@@ -25,7 +25,9 @@ package_README-gen.md: package_README.md version
 	echo "### Build Info" >> $@
 	echo "- Version: ${VERSION}" >> $@
 	echo "- Build Date: `date --rfc-3339=seconds`" >> $@
+	echo "- Git URL: `git config --get remote.origin.url`" >> $@
 	echo "- Git Commit: #`git rev-parse --short HEAD`" >> $@
+	echo "- Branch: `git rev-parse --abbrev-ref HEAD`" >> $@
 
 ui.qml: ui.qml.in version
 	cat $< | sed "s/{{VERSION}}/${VERSION}/g" | ${MINIFY_CMD} > $@
