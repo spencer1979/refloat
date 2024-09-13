@@ -22,8 +22,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define CUSTOM_HW_VERSION_MAJOR 4
-#define CUSTOM_HW_VERSION_MINOR 0
+#define CUSTOM_HW_VERSION_MAJOR 3
+#define CUSTOM_HW_VERSION_MINOR 2
 #define ESP32_COMMAND_ID 102
 
 
