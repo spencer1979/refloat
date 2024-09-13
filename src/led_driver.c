@@ -61,7 +61,7 @@ static void init_dma(LedPin pin, uint16_t *buffer, uint32_t length) {
     }
 
     VESC_IF->set_pad_mode(
-        GPIOB, pin_nr, PAL_MODE_ALTERNATE(2) | PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID1
+        GPIOB, pin_nr, PAL_MODE_ALTERNATE(2) | PAL_STM32_OTYPE_PUSHPULL | PAL_STM32_OSPEED_MID1
     );
 
     TIM_DeInit(tim);
