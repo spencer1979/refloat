@@ -1,5 +1,5 @@
 # use `make VESC_TOOL=path/to/your/vesc_tool` to specify custom vesc_tool path
-VESC_TOOL ?= vesc_tool
+VESC_TOOL ?=/opt/VESC_tool/6.05/vesc_tool_6.05
 # use `make MINIFY_QML=0` to skip qml minification and pack the qml verbatim
 MINIFY_QML ?= 1
 

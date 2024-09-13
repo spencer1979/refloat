@@ -184,8 +184,11 @@ typedef struct {
     float rc_current_target;
     float rc_current;
 
-    Konami flywheel_konami;
-} data;
+        Konami flywheel_konami;
+
+        CustomLightControl clc;
+
+    } data;
 
 static void brake(data *d);
 static void set_current(data *d, float current);
