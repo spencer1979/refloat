@@ -1,0 +1,9 @@
+{
+    "commentTranslate.targetLanguage": "zh-TW",
+    "files.associations": {
+        "vesc_c_if.h": "c",
+        "st_types.h": "c",
+        "custom_hw.h": "c",
+        "spesc_mk4.h": "c"
+    }
+}

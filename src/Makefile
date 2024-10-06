@@ -2,7 +2,7 @@
 # from settings.xml using this file as well, otherwise Refloat Cfg will not
 # load in vesc_tool, see comment below.
 
-VESC_TOOL ?= vesc_tool
+VESC_TOOL ?= /opt/VESC_tool/6.05/vesc_tool_6.05
 
 TARGET = package_lib
 

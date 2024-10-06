@@ -1,5 +1,5 @@
 # use `make VESC_TOOL=path/to/your/vesc_tool` to specify custom vesc_tool path
-VESC_TOOL ?= vesc_tool
+VESC_TOOL ?= /opt/VESC_tool/6.05/vesc_tool_6.05
 # use `make MINIFY_QML=0` to skip qml minification and pack the qml verbatim
 MINIFY_QML ?= 1
 
@@ -25,8 +25,9 @@ package_README-gen.md: package_README.md version
 	echo "### Build Info" >> $@
 	echo "- Version: ${VERSION}" >> $@
 	echo "- Build Date: `date --rfc-3339=seconds`" >> $@
+	echo "- Branch: `git rev-parse --abbrev-ref HEAD`" >> $@
 	echo "- Git Commit: #`git rev-parse --short HEAD`" >> $@
-
+	
 ui.qml: ui.qml.in version
 	cat $< | sed "s/{{VERSION}}/${VERSION}/g" | ${MINIFY_CMD} > $@
 

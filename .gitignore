@@ -1,16 +1,5 @@
-src/conf/conf_general.h
-src/package_lib.lisp
-package_README-gen.md
-ui.qml
 
-conf_default.h
-confparser.c
-confparser.h
-confxml.c
-confxml.h
 *.list
-*.vescpkg
-
 *.bin
 *.d
 *.elf
@@ -18,3 +7,6 @@ confxml.h
 *.obj
 *.so
 *.rcc
+src/package_lib.lisp
+ui.qml
+package_README-gen.md
