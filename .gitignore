@@ -2,6 +2,10 @@ compile_commands.json
 package_README-gen.md
 ui.qml
 
+# toolchain directory
+.toolchains/
+
+# compiled artifacts
 *.bin
 *.d
 *.elf
