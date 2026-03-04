@@ -641,6 +641,7 @@ Item {
         readonly property int c_ALERTS_LIST: 35
         readonly property int c_ALERTS_CONTROL: 36
         readonly property int c_DATA_RECORD_REQUEST: 41
+        readonly property int c_AUDIO_ALERT: 66
         readonly property int c_DATA_RECORD_HEADER: 42
         readonly property int c_DATA_RECORD_DATA: 43
 
@@ -745,6 +746,12 @@ Item {
 
             data.setUint8(2, 0x1);  // clear the fatal error flag
 
+            vescCommands.sendCustomAppData(data.buffer);
+        }
+
+        function sendAudioAlert(alertType) {
+            var data = createData(3, c_AUDIO_ALERT);
+            data.setUint8(2, alertType);
             vescCommands.sendCustomAppData(data.buffer);
         }
 
@@ -6878,6 +6885,7 @@ Item {
 
             TabButton {text: "Tunes"}
             TabButton {text: "Control"}
+            TabButton {text: "Alert"}
             TabButton {text: "Data"}
 
             background: Rectangle {
@@ -7181,6 +7189,69 @@ Item {
                     Item {
                         width: parent.width
                         height: 0.1 * unit
+                    }
+                }
+            }
+
+            ScrollView {
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                contentWidth: availableWidth
+                clip: true
+
+                GridLayout {
+                    anchors.fill: parent
+                    anchors.margins: 0.2 * unit
+                    rowSpacing: 0.12 * unit
+                    columnSpacing: 0.12 * unit
+                    columns: 2
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Police"
+                        onClicked: {
+                            commands.sendAudioAlert(11);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Ambulance"
+                        onClicked: {
+                            commands.sendAudioAlert(12);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Excuse Me 1"
+                        onClicked: {
+                            commands.sendAudioAlert(21);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Excuse Me 2"
+                        onClicked: {
+                            commands.sendAudioAlert(22);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Horn"
+                        onClicked: {
+                            commands.sendAudioAlert(31);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Mario"
+                        onClicked: {
+                            commands.sendAudioAlert(32);
+                        }
                     }
                 }
             }

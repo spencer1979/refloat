@@ -1265,6 +1265,8 @@ enum {
     COMMAND_ALERTS_LIST = 35,
     COMMAND_ALERTS_CONTROL = 36,
     COMMAND_DATA_RECORD_REQUEST = 41,
+    COMMAND_AUDIO_ALERT = 66,
+
 
     // commands above 200 are unstable and can change protocol at any time
 } Commands;
@@ -1375,6 +1377,8 @@ static void cmd_send_all_data(Data *d, unsigned char mode) {
             // ind = 35
         }
 
+         buffer[ind++] = d->audio_alert_type; // send audio alert 
+
         if (mode >= 2) {
             // data not required as fast as possible
             buffer_append_float32_auto(buffer, VESC_IF->mc_get_distance_abs(), &ind);
@@ -1401,7 +1405,9 @@ static void cmd_send_all_data(Data *d, unsigned char mode) {
         }
     }
 
+   
     SEND_APP_DATA(buffer, bufsize, ind);
+    d->audio_alert_type = 0;
 }
 
 static void split(unsigned char byte, int *h1, int *h2) {
@@ -2296,6 +2302,12 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
     }
     case COMMAND_ALERTS_CONTROL: {
         cmd_alerts_control(&d->alert_tracker, &buffer[2], len - 2);
+        return;
+    }
+    case COMMAND_AUDIO_ALERT: {
+        uint8_t alert_type = len > 2 ? buffer[2] : 0;
+        d->audio_alert_type = alert_type;
+        log_error("Audio alert queued: len=%u type=%u", len, alert_type);
         return;
     }
     default: {

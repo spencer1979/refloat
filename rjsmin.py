@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: ascii -*-
 u"""
 https://github.com/ndparker/rjsmin

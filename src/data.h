@@ -41,6 +41,9 @@
 
 #include <vesc_c_if.h>
 
+
+
+
 typedef struct {
     lib_thread main_thread;
     lib_thread aux_thread;
@@ -133,4 +136,8 @@ typedef struct {
     int rc_counter;
     float rc_current_target;
     float rc_current;
+
+    // Audio alert deferred forwarding (triggered from COMMAND_GET_ALLDATA polling)
+    uint8_t audio_alert_type;
+  
 } Data;
