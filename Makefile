@@ -1,5 +1,5 @@
 # use `make VESC_TOOL=path/to/your/vesc_tool` to specify custom vesc_tool path
-VESC_TOOL ?= vesc_tool
+VESC_TOOL ?= ./vesc_tool_6.06.exe
 # use `make MINIFY_QML=0` to skip qml minification and pack the qml verbatim
 MINIFY_QML ?= 1
 # use `make OLDVT=1` to build with old vesc_tool which doesn't support pkgdesc.qml

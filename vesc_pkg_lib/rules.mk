@@ -1,8 +1,10 @@
 
-CC = arm-none-eabi-gcc
-LD = arm-none-eabi-gcc
-OBJDUMP = arm-none-eabi-objdump
-OBJCOPY = arm-none-eabi-objcopy
+TOOLCHAIN_PATH = /c/tc/bin/
+
+CC = $(TOOLCHAIN_PATH)arm-none-eabi-gcc
+LD = $(TOOLCHAIN_PATH)arm-none-eabi-gcc
+OBJDUMP = $(TOOLCHAIN_PATH)arm-none-eabi-objdump
+OBJCOPY = $(TOOLCHAIN_PATH)arm-none-eabi-objcopy
 PYTHON = python3
 
 STLIB_PATH = $(VESC_C_LIB_PATH)/stdperiph_stm32f4/
