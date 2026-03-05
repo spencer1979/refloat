@@ -1,5 +1,5 @@
 
-TOOLCHAIN_PATH = /c/tc/bin/
+TOOLCHAIN_PATH = $(VESC_C_LIB_PATH)/../toolchain/bin/
 
 CC = $(TOOLCHAIN_PATH)arm-none-eabi-gcc
 LD = $(TOOLCHAIN_PATH)arm-none-eabi-gcc

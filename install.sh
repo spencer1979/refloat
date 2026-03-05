@@ -4,7 +4,9 @@ set -e
 # --- ARM Toolchain ---
 TOOLCHAIN_ZIP="gcc-arm-none-eabi-7-2018-q2-update-win32.zip"
 TOOLCHAIN_URL="https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-win32.zip"
-TOOLCHAIN_DIR="/c/tc"
+# Install next to this script (repo root) in toolchain/
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOOLCHAIN_DIR="${SCRIPT_DIR}/toolchain"
 TMP_TOOLCHAIN="/tmp/${TOOLCHAIN_ZIP}"
 
 # --- VESC Tool (hosted on Google Drive) ---
@@ -41,7 +43,7 @@ else
 
     echo "      Extracting to ${TOOLCHAIN_DIR} ..."
     mkdir -p "${TOOLCHAIN_DIR}"
-    tar -xf "${TMP_TOOLCHAIN}" -C "${TOOLCHAIN_DIR}"
+    unzip -q "${TMP_TOOLCHAIN}" -d "${TOOLCHAIN_DIR}"
     rm -f "${TMP_TOOLCHAIN}"
 
     GCC_EXE="${TOOLCHAIN_DIR}/bin/arm-none-eabi-gcc"
