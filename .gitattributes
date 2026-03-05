@@ -1,0 +1,7 @@
+* text=auto
+
+# Shell scripts must use LF
+*.sh text eol=lf
+
+# Windows batch files use CRLF
+*.bat text eol=crlf
