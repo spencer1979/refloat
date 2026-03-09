@@ -3,7 +3,11 @@ package_README-gen.md
 ui.qml
 
 # toolchain directory
+toolchain/
 .toolchains/
+
+# build output
+build/
 
 # compiled artifacts
 *.bin
