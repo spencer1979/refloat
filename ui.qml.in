@@ -7210,7 +7210,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Police"
                         onClicked: {
-                            commands.sendAudioAlert(11);
+                            commands.sendAudioAlert(1);
                         }
                     }
 
@@ -7218,23 +7218,23 @@ Item {
                         Layout.fillWidth: true
                         text: "Ambulance"
                         onClicked: {
-                            commands.sendAudioAlert(12);
+                            commands.sendAudioAlert(2);
                         }
                     }
 
                     Button {
                         Layout.fillWidth: true
-                        text: "Excuse Me 1"
+                        text: "Excuse Me"
                         onClicked: {
-                            commands.sendAudioAlert(21);
+                            commands.sendAudioAlert(3);
                         }
                     }
 
                     Button {
                         Layout.fillWidth: true
-                        text: "Excuse Me 2"
+                        text: "Excuse Me(tw)"
                         onClicked: {
-                            commands.sendAudioAlert(22);
+                            commands.sendAudioAlert(4);
                         }
                     }
 
@@ -7242,7 +7242,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Horn"
                         onClicked: {
-                            commands.sendAudioAlert(31);
+                            commands.sendAudioAlert(5);
                         }
                     }
 
@@ -7250,7 +7250,23 @@ Item {
                         Layout.fillWidth: true
                         text: "Mario"
                         onClicked: {
-                            commands.sendAudioAlert(32);
+                            commands.sendAudioAlert(6);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Danger"
+                        onClicked: {
+                            commands.sendAudioAlert(7);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Get on"
+                        onClicked: {
+                            commands.sendAudioAlert(8);
                         }
                     }
                 }

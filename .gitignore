@@ -8,7 +8,8 @@ toolchain/
 
 # build output
 build/
-
+refloat/src/*.d
+refloat/src/*.so
 # compiled artifacts
 *.bin
 *.d

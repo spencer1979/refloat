@@ -1191,6 +1191,7 @@ static void read_cfg_from_eeprom(Data *d) {
 static void data_init(Data *d) {
     memset(d, 0, sizeof(Data));
 
+
     read_cfg_from_eeprom(d);
 
     balance_filter_init(&d->balance_filter);
@@ -1377,14 +1378,12 @@ static void cmd_send_all_data(Data *d, unsigned char mode) {
             // ind = 35
         }
 
-         buffer[ind++] = d->audio_alert_type; // send audio alert 
-
         if (mode >= 2) {
             // data not required as fast as possible
             buffer_append_float32_auto(buffer, VESC_IF->mc_get_distance_abs(), &ind);
             buffer[ind++] = fmaxf(0, d->motor.mosfet_temp * 2);
             buffer[ind++] = fmaxf(0, d->motor.motor_temp * 2);
-            buffer[ind++] = 0;  // fmaxf(VESC_IF->mc_batt_temp() * 2);
+            buffer[ind++] = d->audio_alert_type; // send audio alert ;  // fmaxf(VESC_IF->mc_batt_temp() * 2);
             // ind = 42
         }
         if (mode >= 3) {
@@ -2304,10 +2303,15 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
         cmd_alerts_control(&d->alert_tracker, &buffer[2], len - 2);
         return;
     }
-    case COMMAND_AUDIO_ALERT: {
-        uint8_t alert_type = len > 2 ? buffer[2] : 0;
-        d->audio_alert_type = alert_type;
-        log_error("Audio alert queued: len=%u type=%u", len, alert_type);
+    case COMMAND_AUDIO_ALERT: { //接收來至APP的聲音警報指令
+         if (len < 3) {
+            return;  // need at least type byte
+         }
+         uint8_t alert_type = buffer[2];
+         log_msg("Audio alert command received: type %u", alert_type);
+         d->audio_alert_type = alert_type;
+         // forwarding removed; value will be sent in cmd_send_all_data
+
         return;
     }
     default: {
@@ -2317,6 +2321,7 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
     }
     }
 }
+
 
 // Called from Lisp on init to pass in the version info of the firmware
 static lbm_value ext_set_fw_version(lbm_value *args, lbm_uint argn) {
