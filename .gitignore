@@ -19,3 +19,6 @@ refloat/src/*.so
 *.obj
 *.so
 *.vescpkg
+
+# ignore executables
+*.exe
