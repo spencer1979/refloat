@@ -258,17 +258,19 @@ function Add-BuildCommitSectionToReadme([string]$repoRoot) {
         $commitMessage = "(no commit message)"
     }
 
+    $upstreamReleasesUrl = "https://github.com/lukash/refloat/releases"
     $repoUrl = Resolve-RepoWebUrl -repoRoot $repoRoot
     if ([string]::IsNullOrWhiteSpace($repoUrl)) {
         $repoUrl = "(remote.origin.url not set)"
     }
 
     $section = @"
-## Repository link, short commit hash, and commit details
-- Repo: $repoUrl
-- Commit: $shortHash
+## Based on the original project with local modifications
+- Original Project Releases: $upstreamReleasesUrl
+- This Build Repository: $repoUrl
+- Build Commit: $shortHash
 
-### Commit Message
+### Local Modification Summary (Latest Commit Message)
 $commitMessage
 "@
 
