@@ -602,6 +602,7 @@ Item {
         readonly property int c_REALTIME_DATA_INTERNAL_IDS: 32
         readonly property int c_ALERTS_LIST: 35
         readonly property int c_ALERTS_CONTROL: 36
+        readonly property int c_AUDIO_ALERT: 66
         readonly property int c_DATA_RECORD: 41
         readonly property int c_DATA_RECORD_HEADER: 42
         readonly property int c_DATA_RECORD_DATA: 43
@@ -707,6 +708,12 @@ Item {
 
             data.setUint8(2, 0x1);  // clear the fatal error flag
 
+            vescCommands.sendCustomAppData(data.buffer);
+        }
+
+        function sendAudioAlert(alertType) {
+            var data = createData(3, c_AUDIO_ALERT);
+            data.setUint8(2, alertType);
             vescCommands.sendCustomAppData(data.buffer);
         }
 
@@ -7469,6 +7476,7 @@ Item {
 
             TabButton {text: "Tunes"}
             TabButton {text: "Control"}
+            TabButton {text: "Alert"}
             TabButton {text: "Data"}
 
             background: Rectangle {
