@@ -1401,6 +1401,7 @@ static void cmd_send_all_data(Data *d, unsigned char mode) {
     }
 
     SEND_APP_DATA(buffer, bufsize, ind);
+    d->audio_alert_type = 0;
 }
 
 static void split(unsigned char byte, int *h1, int *h2) {
