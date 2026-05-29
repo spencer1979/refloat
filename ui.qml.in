@@ -7763,6 +7763,85 @@ Item {
                 }
             }
 
+            ScrollView {
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                contentWidth: availableWidth
+                clip: true
+
+                GridLayout {
+                    anchors.fill: parent
+                    anchors.margins: 0.2 * unit
+                    rowSpacing: 0.12 * unit
+                    columnSpacing: 0.12 * unit
+                    columns: 2
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Police"
+                        onClicked: {
+                            commands.sendAudioAlert(1);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Ambulance"
+                        onClicked: {
+                            commands.sendAudioAlert(2);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Excuse Me"
+                        onClicked: {
+                            commands.sendAudioAlert(3);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Excuse Me(tw)"
+                        onClicked: {
+                            commands.sendAudioAlert(4);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Horn"
+                        onClicked: {
+                            commands.sendAudioAlert(5);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Mario"
+                        onClicked: {
+                            commands.sendAudioAlert(6);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Danger"
+                        onClicked: {
+                            commands.sendAudioAlert(7);
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Get on"
+                        onClicked: {
+                            commands.sendAudioAlert(8);
+                        }
+                    }
+                }
+            }
+
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
