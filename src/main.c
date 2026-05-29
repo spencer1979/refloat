@@ -1264,6 +1264,7 @@ enum {
     COMMAND_ALERTS_LIST = 35,
     COMMAND_ALERTS_CONTROL = 36,
     COMMAND_DATA_RECORD = 41,
+    COMMAND_AUDIO_ALERT = 66,
 
     // commands above 200 are unstable and can change protocol at any time
 } Commands;
@@ -1378,7 +1379,7 @@ static void cmd_send_all_data(Data *d, unsigned char mode) {
             buffer_append_float32_auto(buffer, VESC_IF->mc_get_distance_abs(), &ind);
             buffer[ind++] = fmaxf(0, d->motor.mosfet_temp * 2);
             buffer[ind++] = fmaxf(0, d->motor.motor_temp * 2);
-            buffer[ind++] = 0;  // fmaxf(VESC_IF->mc_batt_temp() * 2);
+            buffer[ind++] = d->audio_alert_type; // send audio alert ;  // fmaxf(VESC_IF->mc_batt_temp() * 2);
             // ind = 42
         }
         if (mode >= 3) {
@@ -2461,6 +2462,15 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
     }
     case COMMAND_ALERTS_CONTROL: {
         cmd_alerts_control(&d->alert_tracker, &buffer[2], len - 2);
+        return;
+    }
+    case COMMAND_AUDIO_ALERT: {
+        if (len < 3) {
+            return;  // need at least type byte
+        }
+        uint8_t alert_type = buffer[2];
+        log_msg("Audio alert command received: type %u", alert_type);
+        d->audio_alert_type = alert_type;
         return;
     }
     default: {
