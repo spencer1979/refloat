@@ -10,3 +10,13 @@ ui.qml
 *.obj
 *.so
 *.vescpkg
+
+# Local toolchain artifacts (kept locally, never committed)
+/toolchain/
+/gcc-arm-none-eabi-*-win32.zip
+
+# Local downloaded build helpers (kept locally, never committed)
+/tools/
+
+# PowerShell local cache data
+/Microsoft/Windows/PowerShell/
