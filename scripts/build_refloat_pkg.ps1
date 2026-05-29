@@ -349,4 +349,22 @@ if (-not (Test-Path $pkgPath)) {
     throw "Build finished but refloat.vescpkg was not generated."
 }
 
+$shortHash = (git -C $repoRoot rev-parse --short HEAD).Trim()
+$versionPath = Join-Path $repoRoot "version"
+if (-not (Test-Path $versionPath)) {
+    throw "Version file not found: $versionPath"
+}
+$version = (Get-Content -Path $versionPath -Raw).Trim()
+if ([string]::IsNullOrWhiteSpace($version)) {
+    throw "Version file is empty: $versionPath"
+}
+
+$buildDir = Join-Path $repoRoot "builds"
+if (-not (Test-Path $buildDir)) {
+    New-Item -ItemType Directory -Path $buildDir | Out-Null
+}
+$destPkgPath = Join-Path $buildDir "refloat-$version-$shortHash.vescpkg"
+Copy-Item -Path $pkgPath -Destination $destPkgPath -Force
+
 Write-Host "Done: $pkgPath"
+Write-Host "Moved package to: $destPkgPath"
