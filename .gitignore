@@ -9,7 +9,7 @@ ui.qml
 *.o
 *.obj
 *.so
-*.vescpkg
+
 
 # Local toolchain artifacts (kept locally, never committed)
 /toolchain/
