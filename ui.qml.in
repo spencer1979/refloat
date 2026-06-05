@@ -602,7 +602,7 @@ Item {
         readonly property int c_REALTIME_DATA_INTERNAL_IDS: 32
         readonly property int c_ALERTS_LIST: 35
         readonly property int c_ALERTS_CONTROL: 36
-        readonly property int c_ASR_HW_CONTROL: 66
+        readonly property int c_AUDIO_ALERT: 66
         readonly property int c_DATA_RECORD: 41
         readonly property int c_DATA_RECORD_HEADER: 42
         readonly property int c_DATA_RECORD_DATA: 43
@@ -711,9 +711,9 @@ Item {
             vescCommands.sendCustomAppData(data.buffer);
         }
 
-        function asr_hw_control (alertType , volume) {
-            var data = createData(3, c_ASR_HW_CONTROL);
-            data.setUint8(2, (volume << 4) | alertType); 
+        function sendAudioAlert(alertType) {
+            var data = createData(3, c_AUDIO_ALERT);
+            data.setUint8(2, alertType);
             vescCommands.sendCustomAppData(data.buffer);
         }
 
@@ -7476,7 +7476,7 @@ Item {
 
             TabButton {text: "Tunes"}
             TabButton {text: "Control"}
-            TabButton {text: "ASR_HW"}
+            TabButton {text: "Alert"}
             TabButton {text: "Data"}
 
             background: Rectangle {
@@ -7777,72 +7777,9 @@ Item {
                 contentWidth: availableWidth
                 clip: true
 
-                Column {
+                GridLayout {
                     anchors.fill: parent
                     anchors.margins: 0.2 * unit
-                    spacing: 0.12 * unit
-
-                    // Volume slider
-                    Column {
-                        width: parent.width
-                        spacing: 0.05 * unit
-
-                        RowLayout {
-                            width: parent.width
-
-                            LText {
-                                text: "Volume"
-                                font.pixelSize: fontSizeSmall
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            LText {
-                                id: audioVolumeLabel
-                                text: audioVolumeSlider.value.toFixed(0)
-                                font.pixelSize: fontSizeSmall
-                                horizontalAlignment: Text.AlignRight
-                            }
-                        }
-
-                        Slider {
-                            id: audioVolumeSlider
-                            width: parent.width
-                            from: 1
-                            to: 7
-                            stepSize: 1
-                            value: 5
-                            onValueChanged: commands.asr_hw_control(0, audioVolumeSlider.value)
-
-                            background: Rectangle {
-                                x: audioVolumeSlider.leftPadding
-                                y: audioVolumeSlider.topPadding + audioVolumeSlider.availableHeight / 2 - height / 2
-                                width: audioVolumeSlider.availableWidth
-                                height: 0.08 * unit
-                                radius: height / 2
-                                color: Utility.getAppHexColor("disabledText")
-
-                                Rectangle {
-                                    width: audioVolumeSlider.visualPosition * parent.width
-                                    height: parent.height
-                                    radius: parent.radius
-                                    color: Utility.getAppHexColor("lightAccent")
-                                }
-                            }
-
-                            handle: Rectangle {
-                                x: audioVolumeSlider.leftPadding + audioVolumeSlider.visualPosition * (audioVolumeSlider.availableWidth - width)
-                                y: audioVolumeSlider.topPadding + audioVolumeSlider.availableHeight / 2 - height / 2
-                                width: 0.3 * unit
-                                height: 0.3 * unit
-                                radius: width / 2
-                                color: audioVolumeSlider.pressed ? Utility.getAppHexColor("lightAccent") : Utility.getAppHexColor("lightText")
-                            }
-                        }
-                    }
-
-                    GridLayout {
-                        width: parent.width
                     rowSpacing: 0.12 * unit
                     columnSpacing: 0.12 * unit
                     columns: 2
@@ -7851,7 +7788,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Police"
                         onClicked: {
-                                commands.sendAudioAlert(1, audioVolumeSlider.value);
+                            commands.sendAudioAlert(1);
                         }
                     }
 
@@ -7859,7 +7796,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Ambulance"
                         onClicked: {
-                                commands.sendAudioAlert(2, audioVolumeSlider.value);
+                            commands.sendAudioAlert(2);
                         }
                     }
 
@@ -7867,7 +7804,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Excuse Me"
                         onClicked: {
-                                commands.sendAudioAlert(3, audioVolumeSlider.value);
+                            commands.sendAudioAlert(3);
                         }
                     }
 
@@ -7875,7 +7812,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Excuse Me(tw)"
                         onClicked: {
-                                commands.sendAudioAlert(4, audioVolumeSlider.value);
+                            commands.sendAudioAlert(4);
                         }
                     }
 
@@ -7883,7 +7820,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Horn"
                         onClicked: {
-                                commands.sendAudioAlert(5, audioVolumeSlider.value);
+                            commands.sendAudioAlert(5);
                         }
                     }
 
@@ -7891,9 +7828,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Mario"
                         onClicked: {
-                                 onClicked: {
-                                commands.sendAudioAlert(8, audioVolumeSlider.value);
-                            }
+                            commands.sendAudioAlert(6);
                         }
                     }
 
@@ -7901,7 +7836,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Danger"
                         onClicked: {
-                                commands.sendAudioAlert(7, audioVolumeSlider.value);
+                            commands.sendAudioAlert(7);
                         }
                     }
 
@@ -7909,8 +7844,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Get on"
                         onClicked: {
-                                commands.sendAudioAlert(8, audioVolumeSlider.value);
-                            }
+                            commands.sendAudioAlert(8);
                         }
                     }
                 }
