@@ -127,5 +127,7 @@ typedef struct {
     float softstart_pid_limit;
 
     uint64_t odometer;
-    uint8_t audio_alert_type;
+    //[ volume(0-7) | alert_type(1-8) ]
+    //↑ 高 4 bits    ↑ 低 4 bits
+    uint8_t asr_hw_control;
 } Data;
