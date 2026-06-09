@@ -711,7 +711,7 @@ Item {
             vescCommands.sendCustomAppData(data.buffer);
         }
 
-        function asr_hw_control (alertType , volume) {
+        function sendAudioAlert (alertType , volume) {
             var data = createData(3, c_ASR_HW_CONTROL);
             data.setUint8(2, (volume << 4) | alertType); 
             vescCommands.sendCustomAppData(data.buffer);
@@ -7812,7 +7812,7 @@ Item {
                             to: 7
                             stepSize: 1
                             value: 5
-                            onValueChanged: commands.asr_hw_control(0, audioVolumeSlider.value)
+                            onValueChanged: commands.sendAudioAlert(0, audioVolumeSlider.value)
 
                             background: Rectangle {
                                 x: audioVolumeSlider.leftPadding
@@ -7851,7 +7851,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Police"
                         onClicked: {
-                                commands.sendAudioAlert(1, audioVolumeSlider.value);
+                                commands.sendAudioAlert(1, 0);
                         }
                     }
 
@@ -7859,15 +7859,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Ambulance"
                         onClicked: {
-                                commands.sendAudioAlert(2, audioVolumeSlider.value);
-                        }
-                    }
-
-                    Button {
-                        Layout.fillWidth: true
-                        text: "Excuse Me"
-                        onClicked: {
-                                commands.sendAudioAlert(3, audioVolumeSlider.value);
+                                commands.sendAudioAlert(2, 0);
                         }
                     }
 
@@ -7875,7 +7867,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Excuse Me(tw)"
                         onClicked: {
-                                commands.sendAudioAlert(4, audioVolumeSlider.value);
+                                commands.sendAudioAlert(4, 0);
                         }
                     }
 
@@ -7883,7 +7875,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Horn"
                         onClicked: {
-                                commands.sendAudioAlert(5, audioVolumeSlider.value);
+                                commands.sendAudioAlert(5, 0);
                         }
                     }
 
@@ -7891,9 +7883,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Mario"
                         onClicked: {
-                                 onClicked: {
-                                commands.sendAudioAlert(8, audioVolumeSlider.value);
-                            }
+                                commands.sendAudioAlert(6, 0);
                         }
                     }
 
@@ -7901,7 +7891,7 @@ Item {
                         Layout.fillWidth: true
                         text: "Danger"
                         onClicked: {
-                                commands.sendAudioAlert(7, audioVolumeSlider.value);
+                                commands.sendAudioAlert(7, 0);
                         }
                     }
 
@@ -7909,9 +7899,9 @@ Item {
                         Layout.fillWidth: true
                         text: "Get on"
                         onClicked: {
-                                commands.sendAudioAlert(8, audioVolumeSlider.value);
-                            }
+                                commands.sendAudioAlert(8, 0);
                         }
+                    }
                     }
                 }
             }

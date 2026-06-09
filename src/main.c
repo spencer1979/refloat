@@ -1403,7 +1403,7 @@ static void cmd_send_all_data(Data *d, unsigned char mode) {
     }
 
     SEND_APP_DATA(buffer, bufsize, ind);
-  d->asr_hw_control &= 0xF0; //reset low 4 bits for alert type. 
+    d->asr_hw_control = 0; // Reset both volume and alert type after sending.
   }
 
 static void split(unsigned char byte, int *h1, int *h2) {
@@ -2472,8 +2472,12 @@ static void on_command_received(unsigned char *buffer, unsigned int len) {
         if (len < 3) {
             return;  // need at least type byte
         }
-        log_msg("Audio alert command received: type %u", buffer[2]);
-        d->asr_hw_control = (uint8_t) buffer[2];
+        // 直接存儲 UI 發送的原始值 (0xV0 或 0x0A)
+        // 這樣就不會同時包含音量與警報，符合單一觸發邏輯
+        d->asr_hw_control = (uint8_t)buffer[2];
+
+        log_msg("Audio control set to: 0x%02X (Vol: %u, Alert: %u)", 
+                d->asr_hw_control, (d->asr_hw_control >> 4), (d->asr_hw_control & 0x0F));
         return;
     }
     default: {
