@@ -7791,7 +7791,7 @@ Item {
                             width: parent.width
 
                             LText {
-                                text: "Volume"
+                                text: "ASR Volume"
                                 font.pixelSize: fontSizeSmall
                             }
 
